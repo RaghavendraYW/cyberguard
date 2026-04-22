@@ -300,9 +300,9 @@
     <div class="card card-pad">
       <div class="card-title" style="margin-bottom:12px;">📊 Reconstruction Error per User</div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Threshold line at 0.65 — users above are classified as potential insiders</div>
-      <div style="height:260px;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:20px;" id="reconChartWrap">
-        <canvas id="reconBarChart"></canvas>
-        <canvas id="reconChart"></canvas>
+      <div style="height:260px;display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;" id="reconChartWrap">
+        <div style="position:relative;height:100%;width:100%;"><canvas id="reconBarChart"></canvas></div>
+        <div style="position:relative;height:100%;width:100%;"><canvas id="reconChart"></canvas></div>
       </div>
     </div>
     <!-- Confusion Matrix (Paper Figure 9) -->
