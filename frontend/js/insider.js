@@ -303,8 +303,7 @@ async function loadBenchmarks() {
     const res = await api("GET", "/insider/benchmarks");
     const data = res.benchmarks || [];
     if (!data.length) {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="padding:16px;">No benchmarks available.</td></tr>`;
-      return;
+      throw new Error("No benchmarks returned");
     }
 
     // Find the best model by F1 score (highest)
