@@ -300,7 +300,8 @@
     <div class="card card-pad">
       <div class="card-title" style="margin-bottom:12px;">📊 Reconstruction Error per User</div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Threshold line at 0.65 — users above are classified as potential insiders</div>
-      <div style="height:260px;position:relative;" id="reconChartWrap">
+      <div style="height:260px;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:20px;" id="reconChartWrap">
+        <canvas id="reconBarChart"></canvas>
         <canvas id="reconChart"></canvas>
       </div>
     </div>
@@ -635,3 +636,4 @@
 <script src="js/main.js?v=2.1"></script>
 </body>
 </html>
+

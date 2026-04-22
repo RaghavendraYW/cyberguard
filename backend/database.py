@@ -2,7 +2,7 @@
 CyberGuard v2.0 — Database Models & Session
 SQLAlchemy engine, session factory, and all ORM model classes.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Text, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -49,8 +49,8 @@ class UserDB(Base):
     company       = Column(String(120), default="Acme Corp")
     domain        = Column(String(120), default="")
     tracking_key  = Column(String(120), unique=True, nullable=True)
-    last_seen     = Column(DateTime, default=datetime.utcnow)
-    created_at    = Column(DateTime, default=datetime.utcnow)
+    last_seen     = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at    = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class VendorDB(Base):
@@ -67,7 +67,7 @@ class VendorDB(Base):
     notes        = Column(Text, default="")
     trend        = Column(String(10), default="+0")
     last_scanned = Column(String(50), default="Never")
-    created_at   = Column(DateTime, default=datetime.utcnow)
+    created_at   = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class AlertDB(Base):
@@ -80,8 +80,8 @@ class AlertDB(Base):
     description = Column(Text, default="")
     source      = Column(String(50), default="manual")
     ml_score    = Column(Float, default=0.0)
-    created_at  = Column(DateTime, default=datetime.utcnow)
-    updated_at  = Column(DateTime, default=datetime.utcnow)
+    created_at  = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at  = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class LeakDB(Base):
@@ -94,7 +94,7 @@ class LeakDB(Base):
     records     = Column(Integer, default=0)
     status      = Column(String(30), default="open")
     details     = Column(Text, default="")
-    created_at  = Column(DateTime, default=datetime.utcnow)
+    created_at  = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class QuestionnaireDB(Base):
@@ -108,7 +108,7 @@ class QuestionnaireDB(Base):
     status     = Column(String(30), default="pending")
     due_date   = Column(String(20), default="")
     notes      = Column(Text, default="")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class ActivityLogDB(Base):
@@ -120,7 +120,7 @@ class ActivityLogDB(Base):
     user_agent    = Column(String(300), default="")
     device_info   = Column(String(100), default="")
     page          = Column(String(100), default="")
-    timestamp     = Column(DateTime, default=datetime.utcnow)
+    timestamp     = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     is_anomaly    = Column(Boolean, default=False)
     anomaly_score = Column(Float, default=0.0)
 
@@ -130,7 +130,7 @@ class SecurityScoreDB(Base):
     id         = Column(Integer, primary_key=True)
     score      = Column(Integer)
     grade      = Column(String(5), default="B")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class ReportDB(Base):
@@ -140,7 +140,7 @@ class ReportDB(Base):
     type       = Column(String(50), default="security-posture")
     pages      = Column(Integer, default=5)
     content    = Column(Text, default="")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class EmployeeActivityDB(Base):
@@ -150,7 +150,7 @@ class EmployeeActivityDB(Base):
     active_window = Column(String(300), default="")
     device_ip     = Column(String(50), default="")
     status        = Column(String(20), default="active")
-    timestamp     = Column(DateTime, default=datetime.utcnow)
+    timestamp     = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 # Create all tables
