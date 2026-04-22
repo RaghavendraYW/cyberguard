@@ -3,9 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CyberGuard is an enterprise-grade cybersecurity and risk management platform.">
+<meta property="og:title" content="CyberGuard — Security Risk Platform">
+<meta property="og:description" content="Enterprise cybersecurity risk management, automated vendor risk scoring, and ML-powered anomaly detection.">
+<meta name="theme-color" content="#07090f">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡</text></svg>">
 <title>CyberGuard — Security Risk Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -308,6 +314,44 @@
         <div><span style="color:var(--purple);font-weight:700;">Threshold: </span><span id="insiderThreshold">0.65</span></div>
         <div><span style="color:var(--warn);font-weight:700;">Users Analyzed: </span><span id="insiderTotalUsers">—</span></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Algorithm Result Comparison Benchmarks -->
+  <div class="card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <div class="card-title">📈 Algorithm Result Comparison</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadBenchmarks()">↻ Load Benchmarks</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Algorithm</th>
+            <th>Accuracy</th>
+            <th>Precision</th>
+            <th>Recall (Sensitivity)</th>
+            <th>F1 Score</th>
+          </tr>
+        </thead>
+        <tbody id="insiderBenchmarksTable">
+          <tr><td colspan="5" class="text-center" style="padding:16px;">Click 'Load Benchmarks' to evaluate historical algorithm benchmarks.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Charts: Performance Evaluation + Result Comparison (Paper Figures 10 & 11) -->
+  <div class="grid-2" style="margin-bottom:18px;display:none;" id="benchmarkChartsRow">
+    <div class="card card-pad">
+      <div class="card-title" style="margin-bottom:4px;">📊 Performance Evaluation</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;">Platform model — Accuracy, Precision, Recall, F1Score, FPR</div>
+      <div style="height:230px;position:relative;"><canvas id="perfEvalChart"></canvas></div>
+    </div>
+    <div class="card card-pad">
+      <div class="card-title" style="margin-bottom:4px;">📈 Result Comparison</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px;">All algorithms — Accuracy · Precision · F1-Score · Recall</div>
+      <div style="height:230px;position:relative;"><canvas id="resultCompChart"></canvas></div>
     </div>
   </div>
 

@@ -2,7 +2,7 @@
 CyberGuard v2.0 — Vendor Risk Scorer (Random Forest)
 """
 import os
-import pickle
+import joblib
 import numpy as np
 from config import ML_DIR
 
@@ -15,11 +15,10 @@ class VendorRiskScorer:
     def __init__(self):
         self.model = None
         self.trained = False
-        path = os.path.join(ML_DIR, "vendor.pkl")
+        path = os.path.join(ML_DIR, "vendor.joblib")
         if os.path.exists(path):
-            with open(path, "rb") as f:
-                self.model = pickle.load(f)
-                self.trained = True
+            self.model = joblib.load(path)
+            self.trained = True
         else:
             self._train(path)
 
@@ -36,8 +35,7 @@ class VendorRiskScorer:
             self.model = RandomForestClassifier(n_estimators=100, random_state=42, max_depth=8)
             self.model.fit(np.column_stack([scores, issues, crits, cats]), labels)
             self.trained = True
-            with open(path, "wb") as f:
-                pickle.dump(self.model, f)
+            joblib.dump(self.model, path)
             print("✅ Vendor risk scorer trained")
         except Exception as e:
             print(f"⚠ Vendor: {e}")

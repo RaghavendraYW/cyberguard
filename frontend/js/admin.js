@@ -87,7 +87,12 @@ async function viewUserActivity(email, name) {
       <div style="padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
         <div><div style="font-weight:700;font-size:15px;">${name} — Activity Log</div>
         <div style="font-size:11px;color:var(--text2);margin-top:2px;">${d.totalLogs} actions · ${d.anomalyCount} anomalies</div></div>
-        <button onclick="document.getElementById('__userLogPopup').remove();document.getElementById('__bd').remove();document.body.style.overflow='';" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <a href="/api/admin/user/${encodeURIComponent(email)}/download-logs" download target="_blank" style="text-decoration:none;">
+            <button style="background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📥 Download CSV</button>
+          </a>
+          <button onclick="document.getElementById('__userLogPopup').remove();document.getElementById('__bd').remove();document.body.style.overflow='';" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
+        </div>
       </div>
       <div style="overflow-y:auto;flex:1;">
         ${d.logs.slice(0,30).map(l=>`<div style="display:flex;gap:10px;padding:8px 20px;border-bottom:1px solid var(--border);font-size:11px;${l.isAnomaly?'background:rgba(244,63,94,0.04)':''}">

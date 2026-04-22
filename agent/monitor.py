@@ -6,9 +6,9 @@ import os
 import sys
 import time
 import requests
+import argparse
 import pygetwindow as gw
 
-API_BASE_URL = "http://10.114.232.132:8000/api/monitoring"
 POLL_INTERVAL_SEC = 5
 
 def get_active_window_title():
@@ -21,16 +21,22 @@ def get_active_window_title():
     return "Unknown / Desktop"
 
 def main():
+    parser = argparse.ArgumentParser(description="CyberGuard Endpoint Agent")
+    parser.add_argument("--key", help="Tracking Key")
+    parser.add_argument("--server", default="http://127.0.0.1:8000", help="CyberGuard Server URL")
+    args = parser.parse_args()
+
     print("="*50)
     print("  CyberGuard Endpoint Agent")
     print("="*50)
     
-    tracking_key = sys.argv[1] if len(sys.argv) > 1 else input("Enter your CyberGuard Tracking Key: ").strip()
+    tracking_key = args.key if args.key else input("Enter your CyberGuard Tracking Key: ").strip()
     if not tracking_key:
         print("Tracking key is required. Exiting.")
         sys.exit(1)
         
-    print(f"Connecting to {API_BASE_URL}...")
+    api_url = f"{args.server}/api/monitoring"
+    print(f"Connecting to {api_url}...")
     
     last_title = None
     
@@ -45,7 +51,7 @@ def main():
                 "status": "active"
             }
             
-            resp = requests.post(f"{API_BASE_URL}/ingest", json=payload, timeout=5)
+            resp = requests.post(f"{api_url}/ingest", json=payload, timeout=5)
             
             if resp.status_code == 401:
                 print("Error: Invalid tracking key.")

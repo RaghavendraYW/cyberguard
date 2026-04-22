@@ -75,3 +75,11 @@ def insider_scenarios(uid: int = Depends(get_uid), db: Session = Depends(get_db)
             all_scenarios.append({**s, 'user': u['email'], 'recon_error': u['reconstruction_error']})
     all_scenarios.sort(key=lambda x: x.get('confidence', 0), reverse=True)
     return {'scenarios': all_scenarios, 'summary': result['scenarios_summary']}
+
+
+@router.get("/benchmarks")
+def insider_benchmarks(uid: int = Depends(get_uid), db: Session = Depends(get_db)):
+    """Evaluate and return comparative ML models benchmark matrix"""
+    from ml.benchmarks import run_benchmarks
+    result = run_benchmarks(db)
+    return {"status": "success", "benchmarks": result}

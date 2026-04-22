@@ -1,5 +1,6 @@
 # Secrets — NEVER commit these
 .env
+**/.env
 *.db
 *.sqlite
 
@@ -17,6 +18,12 @@ build/
 
 # ML models (will be retrained on server)
 backend/ml/saved_models/*.pkl
+backend/ml/saved_models/*.joblib
+
+# Agent build artifacts
+agent/build/
+agent/dist/
+*.spec
 
 # OS
 .DS_Store
@@ -30,3 +37,6 @@ desktop.ini
 
 # Logs
 *.log
+
+*.db-shm
+*.db-wal

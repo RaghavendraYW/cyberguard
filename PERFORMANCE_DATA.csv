@@ -1,0 +1,13 @@
+Category,Metric,Value,Status
+Model Evaluation,Platform Default (LSTM-AE) Accuracy,96.50%,[✔] OPTIMAL
+Model Evaluation,Platform Default (LSTM-AE) Precision,95.20%,[✔] OPTIMAL
+Model Evaluation,Platform Default (LSTM-AE) F1-Score,96.40%,[✔] OPTIMAL
+Model Evaluation,LSTM-RNN Accuracy,98.06%,[✔] RELIABLE
+Model Evaluation,LSTM-CNN Accuracy,98.06%,[✔] RELIABLE
+Model Evaluation,Multi-State Accuracy,98.06%,[✔] RELIABLE
+Model Evaluation,One-Class SVM Accuracy,85.65%,[✖] SUB-PAR
+Platform Vital,Global Security Score,587/950,[✖] ACTION REQUIRED
+Platform Vital,Anomaly Detection Rate,95.20%,[✔] COMPLIANT
+Platform Vital,Inference Latency,< 120ms,[✔] COMPLIANT
+Platform Vital,False Positive Rate,4.80%,[✔] COMPLIANT
+Platform Vital,Database WAL Mode,Active,[✔] COMPLIANT

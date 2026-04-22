@@ -2,7 +2,7 @@
 CyberGuard v2.0 — Anomaly Detector (Isolation Forest)
 """
 import os
-import pickle
+import joblib
 import numpy as np
 from datetime import datetime
 
@@ -16,11 +16,10 @@ class AnomalyDetector:
     def __init__(self):
         self.model = None
         self.trained = False
-        path = os.path.join(ML_DIR, "anomaly.pkl")
+        path = os.path.join(ML_DIR, "anomaly.joblib")
         if os.path.exists(path):
-            with open(path, "rb") as f:
-                self.model = pickle.load(f)
-                self.trained = True
+            self.model = joblib.load(path)
+            self.trained = True
         else:
             self._train(path)
 
@@ -36,8 +35,7 @@ class AnomalyDetector:
             self.model = IsolationForest(n_estimators=200, contamination=0.08, random_state=42)
             self.model.fit(np.vstack([X_n, X_a]))
             self.trained = True
-            with open(path, "wb") as f:
-                pickle.dump(self.model, f)
+            joblib.dump(self.model, path)
             print("✅ Anomaly detector trained")
         except Exception as e:
             print(f"⚠ Anomaly: {e}")
@@ -72,9 +70,8 @@ class AnomalyDetector:
             self.model = IsolationForest(n_estimators=200, contamination=0.08, random_state=42)
             self.model.fit(np.array(X))
             self.trained = True
-            path = os.path.join(ML_DIR, "anomaly.pkl")
-            with open(path, "wb") as f:
-                pickle.dump(self.model, f)
+            path = os.path.join(ML_DIR, "anomaly.joblib")
+            joblib.dump(self.model, path)
             return {"status": "retrained", "samples": len(X)}
         except Exception as e:
             return {"status": "error", "detail": str(e)}

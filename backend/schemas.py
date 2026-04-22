@@ -37,7 +37,7 @@ class ReportGenReq(BaseModel):
 class CreateUserReq(BaseModel):
     name: str
     email: str
-    password: str = "password123"
+    password: str
     role: str = "Analyst"
     isAdmin: bool = False
     company: str = "Acme Corp"

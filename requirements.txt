@@ -5,6 +5,7 @@ python-jose[cryptography]==3.3.0
 werkzeug==3.0.4
 python-multipart==0.0.12
 python-dotenv==1.0.1
-scikit-learn>=1.6.0
-numpy>=1.26.0
+scikit-learn==1.6.0
+numpy==2.2.0
+joblib
 psycopg2-binary==2.9.9

@@ -75,7 +75,7 @@ def vdict(v, vendor_risk_scorer=None):
         "criticality": v.criticality, "score": v.score, "issues": v.issues,
         "status": v.status, "contact": v.contact, "notes": v.notes, "trend": v.trend,
         "lastScanned": v.last_scanned, "risk": risk_level(v.score),
-        "createdAt": v.created_at.isoformat()
+        "createdAt": v.created_at.isoformat() + "Z"
     }
     if vendor_risk_scorer:
         r = vendor_risk_scorer.predict(d)
@@ -91,10 +91,10 @@ def vdict(v, vendor_risk_scorer=None):
 
 def adict(a):
     return {
-        "id": a.id, "title": a.title, "severity": a.severity, "category": a.category,
-        "status": a.status, "description": a.description, "source": a.source,
-        "mlScore": round(a.ml_score, 3), "createdAt": a.created_at.isoformat(),
-        "updatedAt": a.updated_at.isoformat()
+        "id": int(a.id), "title": str(a.title or ""), "severity": str(a.severity or ""), "category": str(a.category or ""),
+        "status": str(a.status or ""), "description": str(a.description or ""), "source": str(a.source or ""),
+        "mlScore": round(float(a.ml_score or 0), 3), "createdAt": a.created_at.isoformat() + "Z",
+        "updatedAt": a.updated_at.isoformat() + "Z"
     }
 
 
@@ -102,7 +102,7 @@ def ldict(l):
     return {
         "id": l.id, "title": l.title, "severity": l.severity, "source": l.source,
         "credentials": l.credentials, "records": l.records, "status": l.status,
-        "details": l.details, "createdAt": l.created_at.isoformat()
+        "details": l.details, "createdAt": l.created_at.isoformat() + "Z"
     }
 
 
@@ -111,14 +111,14 @@ def qdict(q):
     return {
         "id": q.id, "title": q.title, "framework": q.framework, "vendor": q.vendor,
         "total": q.total, "answered": q.answered, "status": q.status, "due": q.due_date,
-        "notes": q.notes, "percent": pct, "createdAt": q.created_at.isoformat()
+        "notes": q.notes, "percent": pct, "createdAt": q.created_at.isoformat() + "Z"
     }
 
 
 def logdict(l):
     return {
-        "id": l.id, "userEmail": l.user_email, "action": l.action,
-        "ipAddress": l.ip_address, "deviceInfo": l.device_info, "page": l.page,
-        "timestamp": l.timestamp.isoformat(), "isAnomaly": l.is_anomaly,
-        "anomalyScore": round(l.anomaly_score, 3)
+        "id": int(l.id), "userEmail": str(l.user_email or ""), "action": str(l.action or ""),
+        "ipAddress": str(l.ip_address or ""), "deviceInfo": str(l.device_info or ""), "page": str(l.page or ""),
+        "timestamp": l.timestamp.isoformat() + "Z", "isAnomaly": bool(l.is_anomaly),
+        "anomalyScore": round(float(l.anomaly_score or 0), 3)
     }

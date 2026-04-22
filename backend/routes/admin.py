@@ -3,6 +3,9 @@ CyberGuard v2.0 — Admin Routes
 """
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+import io
+import csv
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash
@@ -58,6 +61,39 @@ def user_activity(email: str, uid: int = Depends(get_admin), db: Session = Depen
     logs = db.query(ActivityLogDB).filter_by(user_email=email).order_by(ActivityLogDB.timestamp.desc()).limit(100).all()
     anom = db.query(ActivityLogDB).filter_by(user_email=email, is_anomaly=True).count()
     return {"logs": [logdict(l) for l in logs], "totalLogs": len(logs), "anomalyCount": anom}
+
+
+@router.get("/user/{email}/download-logs")
+def download_user_activity(email: str, uid: int = Depends(get_admin), db: Session = Depends(get_db)):
+    # Fetch all logs for this user
+    logs = db.query(ActivityLogDB).filter_by(user_email=email).order_by(ActivityLogDB.timestamp.desc()).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Timestamp ID', 'Action Executed', 'Window/Page', 'IP Address', 'Device/User Agent', 'Is ML Anomaly?', 'Anomaly Confidence'])
+    
+    # Write rows
+    for l in logs:
+        writer.writerow([
+            l.timestamp.isoformat() + "Z",
+            l.action,
+            l.page or "N/A",
+            l.ip_address or "Unknown",
+            l.device_info or l.user_agent or "Unknown",
+            "YES" if l.is_anomaly else "No",
+            f"{l.anomaly_score * 100:.1f}%" if l.anomaly_score else "N/A"
+        ])
+        
+    output.seek(0)
+    
+    filename = f"cyberguard_logs_{email.split('@')[0]}_{datetime.utcnow().strftime('%Y%m%d%H%M')}.csv"
+    headers = {
+        'Content-Disposition': f'attachment; filename="{filename}"'
+    }
+    
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers=headers)
 
 
 @router.post("/users/create")

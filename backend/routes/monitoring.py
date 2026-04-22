@@ -2,11 +2,12 @@
 CyberGuard v2.0 — Employee Monitoring Routes
 """
 import secrets
+import html
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from database import get_db, UserDB, EmployeeActivityDB
+from database import get_db, UserDB, EmployeeActivityDB, ActivityLogDB
 from schemas import ActivityTelemetryReq
 from auth import get_uid, get_admin
 from helpers import get_ip
@@ -15,21 +16,34 @@ router = APIRouter(prefix="/api/monitoring", tags=["monitoring"])
 
 
 @router.post("/ingest")
+# TODO: Implement strict rate limiting (e.g. 1 req/sec per tracking_key) for production
 def ingest_telemetry(req: ActivityTelemetryReq, request: Request, db: Session = Depends(get_db)):
     user = db.query(UserDB).filter_by(tracking_key=req.tracking_key).first()
     if not user:
         raise HTTPException(401, "Invalid tracking key")
     
     ip = get_ip(request)
+    last_act = db.query(EmployeeActivityDB).filter_by(user_id=user.id).order_by(EmployeeActivityDB.timestamp.desc()).first()
     
     # Optional logic: only keep the latest status per user, or log history? Let's log history.
     activity = EmployeeActivityDB(
         user_id=user.id,
-        active_window=req.active_window[:300],
+        active_window=html.escape(req.active_window[:300]),
         device_ip=ip,
         status=req.status
     )
     db.add(activity)
+
+    if not last_act or last_act.active_window != req.active_window:
+        log = ActivityLogDB(
+            user_email=user.email,
+            action="desktop_monitor",
+            page=html.escape(req.active_window[:100]),
+            ip_address=ip,
+            user_agent="CyberGuard Agent",
+            device_info="Employee Machine"
+        )
+        db.add(log)
     
     user.last_seen = datetime.utcnow()
     db.commit()
@@ -56,7 +70,7 @@ def get_monitored_users(uid: int = Depends(get_admin), db: Session = Depends(get
             "active_window": act.active_window if act else "Unknown",
             "device_ip": act.device_ip if act else "N/A",
             "status": act.status if act else "offline",
-            "last_active": act.timestamp.isoformat() if act else None
+            "last_active": act.timestamp.isoformat() + "Z" if act else None
         })
         
     return {"employees": results}

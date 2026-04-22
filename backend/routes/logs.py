@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db, UserDB, ActivityLogDB, AlertDB
 from schemas import TrackReq, SimulateReq, ClassifyReq
-from auth import get_uid
+from auth import get_uid, get_admin
 from helpers import logdict, get_ip, get_device, recalculate_score
 from ml.engine import anomaly_detector, threat_classifier
 
@@ -48,7 +48,7 @@ def list_anomalies(uid: int = Depends(get_uid), db: Session = Depends(get_db)):
 
 
 @router.post("/ml/retrain")
-def retrain(uid: int = Depends(get_uid), db: Session = Depends(get_db)):
+def retrain(uid: int = Depends(get_admin), db: Session = Depends(get_db)):
     logs = db.query(ActivityLogDB).order_by(ActivityLogDB.timestamp.desc()).limit(1000).all()
     result = anomaly_detector.retrain([{"action": l.action, "timestamp": l.timestamp.isoformat(), "freq": 1} for l in logs])
     if result.get("status") == "retrained":
@@ -79,7 +79,7 @@ def classify_text(req: ClassifyReq, uid: int = Depends(get_uid)):
 
 
 @router.post("/simulate-attack")
-def simulate_attack(req: SimulateReq, uid: int = Depends(get_uid), db: Session = Depends(get_db)):
+def simulate_attack(req: SimulateReq, uid: int = Depends(get_admin), db: Session = Depends(get_db)):
     user = db.get(UserDB, uid)
     attacks = {
         "brute_force":        {"title": "Brute Force Login Attack Detected",      "severity": "critical", "category": "Network",        "description": "150+ failed logins from 185.220.101.45 at 2AM.", "action": "login",         "hour": 2},

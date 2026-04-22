@@ -2,7 +2,7 @@
 CyberGuard v2.0 — Threat Classifier (Naive Bayes + TF-IDF)
 """
 import os
-import pickle
+import joblib
 from config import ML_DIR
 
 
@@ -13,13 +13,11 @@ class ThreatClassifier:
         self.model = None
         self.vec = None
         self.trained = False
-        mp = os.path.join(ML_DIR, "threat.pkl")
-        vp = os.path.join(ML_DIR, "threat_vec.pkl")
+        mp = os.path.join(ML_DIR, "threat.joblib")
+        vp = os.path.join(ML_DIR, "threat_vec.joblib")
         if os.path.exists(mp) and os.path.exists(vp):
-            with open(mp, "rb") as f:
-                self.model = pickle.load(f)
-            with open(vp, "rb") as f:
-                self.vec = pickle.load(f)
+            self.model = joblib.load(mp)
+            self.vec = joblib.load(vp)
             self.trained = True
         else:
             self._train(mp, vp)
@@ -40,10 +38,8 @@ class ThreatClassifier:
             self.model = MultinomialNB(alpha=0.1)
             self.model.fit(X, list(labels))
             self.trained = True
-            with open(mp, "wb") as f:
-                pickle.dump(self.model, f)
-            with open(vp, "wb") as f:
-                pickle.dump(self.vec, f)
+            joblib.dump(self.model, mp)
+            joblib.dump(self.vec, vp)
             print("✅ Threat classifier trained")
         except Exception as e:
             print(f"⚠ Classifier: {e}")

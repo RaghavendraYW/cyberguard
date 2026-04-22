@@ -8,7 +8,9 @@ Modular entrypoint — all logic is split into:
   routes/ (frontend, auth, dashboard, vendors, alerts, leaks, questionnaires, scan, logs, reports, admin, insider)
 """
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -34,11 +36,21 @@ from routes.monitoring import router as monitoring_router
 # ══════════════════════════════════════════════════════════════
 # APP
 # ══════════════════════════════════════════════════════════════
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db = DBSession()
+    try:
+        seed_db(db)
+    finally:
+        db.close()
+    yield
+
 app = FastAPI(
     title="CyberGuard API",
     version="2.0.0",
     docs_url="/docs" if DEBUG else None,
     redoc_url="/redoc" if DEBUG else None,
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -48,6 +60,14 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True,
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+@app.get("/health", tags=["system"])
+def health_check():
+    return {"status": "healthy", "version": "2.0.0"}
 
 # Mount static files for CSS/JS
 app.mount("/css", StaticFiles(directory=os.path.join(FRONTEND_DIR, "css")), name="css")
@@ -69,13 +89,6 @@ app.include_router(insider_router)
 app.include_router(monitoring_router)
 
 
-@app.on_event("startup")
-def on_startup():
-    db = DBSession()
-    try:
-        seed_db(db)
-    finally:
-        db.close()
 
 
 if __name__ == "__main__":
@@ -83,7 +96,7 @@ if __name__ == "__main__":
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
     print(f"\n{'='*55}")
-    print(f"  🛡  CyberGuard v2.0 — Production Ready")
+    print(f"  * CyberGuard v2.0 - Production Ready")
     print(f"{'='*55}")
     print(f"  URL      : http://{host}:{port}")
     print(f"  Health   : http://{host}:{port}/health")
