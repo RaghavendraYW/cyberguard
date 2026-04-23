@@ -521,3 +521,24 @@ function renderResultCompChart(data) {
     }
   });
 }
+
+window.toggleReconView = function(view) {
+  const scatterC = document.getElementById("reconScatterContainer");
+  const barC = document.getElementById("reconBarContainer");
+  const btnScatter = document.getElementById("btnScatterView");
+  const btnBar = document.getElementById("btnBarView");
+  
+  if (!scatterC || !barC) return;
+
+  if(view === 'scatter') {
+    scatterC.style.visibility = 'visible'; scatterC.style.opacity = '1';
+    barC.style.visibility = 'hidden'; barC.style.opacity = '0';
+    btnScatter.style.background = 'var(--accent)'; btnScatter.style.color = '#000';
+    btnBar.style.background = 'var(--bg3)'; btnBar.style.color = 'var(--text2)';
+  } else {
+    barC.style.visibility = 'visible'; barC.style.opacity = '1';
+    scatterC.style.visibility = 'hidden'; scatterC.style.opacity = '0';
+    btnBar.style.background = 'var(--accent)'; btnBar.style.color = '#000';
+    btnScatter.style.background = 'var(--bg3)'; btnScatter.style.color = 'var(--text2)';
+  }
+}

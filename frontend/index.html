@@ -299,10 +299,16 @@
     <!-- Reconstruction Error Chart (Paper Figure 8) -->
     <div class="card card-pad">
       <div class="card-title" style="margin-bottom:12px;">📊 Reconstruction Error per User</div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Threshold line at 0.65 — users above are classified as potential insiders</div>
-      <div style="height:260px;display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;" id="reconChartWrap">
-        <div style="position:relative;height:100%;width:100%;"><canvas id="reconBarChart"></canvas></div>
-        <div style="position:relative;height:100%;width:100%;"><canvas id="reconChart"></canvas></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--text2);">Threshold line at 0.65 — users above are classified as potential insiders</div>
+        <div style="display:flex;gap:6px;font-size:11px;">
+          <button class="btn" style="padding:4px 10px;background:var(--accent);color:#000;" id="btnScatterView" onclick="toggleReconView('scatter')">Scatter Plot</button>
+          <button class="btn" style="padding:4px 10px;background:var(--bg3);color:var(--text2);" id="btnBarView" onclick="toggleReconView('bar')">Bar Graph</button>
+        </div>
+      </div>
+      <div style="height:260px;position:relative;width:100%;" id="reconChartWrap">
+        <div id="reconScatterContainer" style="position:absolute;top:0;left:0;height:100%;width:100%;transition:opacity 0.2s;"><canvas id="reconChart"></canvas></div>
+        <div id="reconBarContainer" style="position:absolute;top:0;left:0;height:100%;width:100%;visibility:hidden;opacity:0;transition:opacity 0.2s;"><canvas id="reconBarChart"></canvas></div>
       </div>
     </div>
     <!-- Confusion Matrix (Paper Figure 9) -->
