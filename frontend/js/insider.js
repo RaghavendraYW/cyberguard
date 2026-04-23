@@ -9,6 +9,7 @@ async function loadInsider() {
     insiderData = await api("GET", "/insider/analyze");
     renderInsiderMetrics(insiderData.metrics);
     renderReconChart(insiderData.users);
+    renderReconBarChart(insiderData.users);
     renderConfusionMatrix(insiderData.metrics.confusion_matrix);
     renderInsiderScenarios(insiderData);
     renderInsiderUsers(insiderData.users);
