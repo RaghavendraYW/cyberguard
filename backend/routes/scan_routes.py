@@ -2,6 +2,8 @@
 CyberGuard v2.0 — Domain Scan Routes
 """
 import re
+import socket
+import ipaddress
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -12,12 +14,43 @@ from scan import ssl_check, header_check, port_check
 
 router = APIRouter(prefix="/api/scan", tags=["scan"])
 
+# SSRF protection: block scanning of internal/private networks
+_BLOCKED_NETWORKS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),    # link-local / cloud metadata
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
+
+
+def _is_private_ip(domain: str) -> bool:
+    """Check if a domain resolves to a private/internal IP address."""
+    try:
+        ips = socket.getaddrinfo(domain, None)
+        for info in ips:
+            addr = ipaddress.ip_address(info[4][0])
+            for net in _BLOCKED_NETWORKS:
+                if addr in net:
+                    return True
+    except (socket.gaierror, ValueError):
+        pass
+    return False
+
 
 @router.post("/domain")
 def scan_domain(req: ScanReq, uid: int = Depends(get_uid), db: Session = Depends(get_db)):
     domain = re.sub(r"^https?://", "", req.domain).split("/")[0].strip().lower()
     if not domain or "." not in domain:
         raise HTTPException(400, "Invalid domain")
+
+    # SSRF protection: block internal/private IP targets
+    if _is_private_ip(domain):
+        raise HTTPException(400, "Scanning internal or private networks is not permitted")
+
 
     sl = ssl_check(domain)
     hd = header_check(domain)

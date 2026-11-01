@@ -25,15 +25,24 @@ agent/build/
 agent/dist/
 *.spec
 
-# OS
+# OS & Office Lock Files
 .DS_Store
 Thumbs.db
 desktop.ini
+~$*.docx
+~$*.xlsx
+~$*.pptx
 
 # IDE
 .vscode/
 .idea/
 *.swp
+
+# Scratch & Duplicate folders
+scratch/
+CyberGuard_Final_App/
+tmp_chrome_*
+chrome_profile/
 
 # Logs
 *.log

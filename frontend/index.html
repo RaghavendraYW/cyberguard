@@ -8,11 +8,13 @@
 <meta property="og:description" content="Enterprise cybersecurity risk management, automated vendor risk scoring, and ML-powered anomaly detection.">
 <meta name="theme-color" content="#07090f">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡</text></svg>">
+<link rel="manifest" href="/manifest.json">
 <title>CyberGuard — Security Risk Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/enterprise.css">
 </head>
 <body>
 <div id="toastContainer"></div>
@@ -23,11 +25,28 @@
     <div class="login-logo"><div class="login-logo-icon">🛡</div><div class="login-logo-text">CYBER<span>GUARD</span></div></div>
     <div class="login-title">Welcome back</div>
     <div class="login-sub">Sign in to your security dashboard</div>
-    <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="loginEmail" type="email" value="admin@company.com" placeholder="admin@company.com"></div>
-    <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="loginPass" type="password" value="password" placeholder="••••••••"></div>
-    <button class="btn-login" onclick="doLogin()">Sign In →</button>
-    <div class="login-error" id="loginError">Invalid credentials. Try again.</div>
-    <div class="login-hint">Demo: <span>admin@company.com</span> / <span>password</span></div>
+    
+    <div class="form-group">
+      <label class="form-label" for="loginEmail">Email / Username</label>
+      <input class="form-input" id="loginEmail" type="text" placeholder="you@company.com" autocomplete="username">
+    </div>
+    
+    <div class="form-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <label class="form-label" for="loginPass" style="margin-bottom:0;">Password</label>
+        <button type="button" onclick="togglePassVisibility()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:0;" title="Toggle password visibility">Show</button>
+      </div>
+      <div style="margin-top:6px;position:relative;">
+        <input class="form-input" id="loginPass" type="password" placeholder="Enter password" autocomplete="current-password">
+      </div>
+    </div>
+
+    <button class="btn-login" id="btnLogin" onclick="doLogin()">Sign In</button>
+    
+    <div class="login-hint" style="margin-top:12px;font-size:12px;color:var(--text3);text-align:center;">
+      Enter your enterprise credentials to sign in.
+    </div>
+    <div class="login-error" id="loginError" style="display:none;margin-top:10px;text-align:center;font-size:13px;padding:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;">Invalid credentials. Try again.</div>
   </div>
 </div>
 
@@ -40,7 +59,7 @@
   <div class="sidebar-logo">
     <div class="logo-shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
     <div class="logo-name">CYBER<span>GUARD</span></div>
-    <div class="logo-version">v2.0</div>
+    <div class="logo-version">v2.5</div>
   </div>
   <nav>
     <div class="nav-group">
@@ -60,6 +79,10 @@
       <div class="nav-item" data-page="attack" data-label="Attack Surface" onclick="goPage('attack',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span> Attack Surface</div>
       <div class="nav-item" data-page="anomalies" data-label="ML Anomalies" onclick="goPage('anomalies',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1v4h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2v-4h1a7 7 0 0 1 7-7h1V5.73A2 2 0 1 1 12 2z"></path></svg></span> ML Anomalies <span class="nav-badge blue" id="badge-anomalies">0</span></div>
       <div class="nav-item" data-page="insider" data-label="Insider Detection" onclick="goPage('insider',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"></circle><path d="M2 12h20M12 2a5 5 0 0 0-5 5H7a5 5 0 0 0 10 0h-2a5 5 0 0 0-5-5z"></path></svg></span> Insider Detection</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Perimeter & Network</div>
+      <div class="nav-item" data-page="vpn" data-label="VPN & Zero-Trust" onclick="goPage('vpn',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg></span> VPN & Zero-Trust <span class="nav-badge" id="badge-vpn" style="background:var(--accent);color:#000;">6 Online</span></div>
     </div>
     <div class="nav-group">
       <div class="nav-label">Compliance & Reports</div>
@@ -84,11 +107,32 @@
 <div class="main-right" id="mainRight">
 <!-- TOPBAR -->
 <div class="topbar" id="topbar">
-  <button class="sidebar-toggle" onclick="toggleSidebar()"><span id="toggleIcon">◀</span></button>
-  <div class="topbar-title" id="pageTitle">Security Dashboard</div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu">☰</button>
+    <button class="sidebar-toggle" onclick="toggleSidebar()"><span id="toggleIcon">◀</span></button>
+    <div>
+      <div class="topbar-title" id="pageTitle">Security Dashboard</div>
+      <div class="breadcrumb" id="breadcrumb">
+        <span class="breadcrumb-item">Home</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Dashboard</span>
+      </div>
+    </div>
+  </div>
   <div class="topbar-right">
-    <div class="search-wrap"><span style="color:var(--text3)">🔍</span><input type="text" id="globalSearch" placeholder="Search vendors, alerts…"></div>
-    <div class="icon-btn" onclick="goPage('alerts',document.querySelector('[data-page=alerts]'))">🔔<span class="dot" id="alertDot">0</span></div>
+    <div class="search-wrap"><span style="color:var(--text3)">🔍</span><input type="text" id="globalSearch" placeholder="Search vendors, alerts, leaks… (press /)"></div>
+    <div class="notif-wrap">
+      <div class="icon-btn" onclick="toggleNotifPanel()" id="notifBellBtn" title="Notifications (G A)">🔔<span class="dot" id="alertDot">0</span></div>
+      <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+      <div class="notif-panel" id="notifPanel">
+        <div class="notif-header">
+          <span>🔔 Notifications</span>
+          <button class="notif-clear-btn" onclick="goPage('alerts',document.querySelector('[data-page=alerts]'));closeNotifPanel()">View all →</button>
+        </div>
+        <div class="notif-body"><div class="notif-empty">Loading…</div></div>
+      </div>
+    </div>
+    <button id="themeToggleBtn" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙 Dark</button>
     <button class="btn btn-primary" onclick="openScanModal()">⚡ Run Scan</button>
   </div>
 </div>
@@ -99,10 +143,38 @@
 <!-- DASHBOARD -->
 <div class="page" id="page-dashboard">
   <div class="grid-4" style="margin-bottom:18px;">
-    <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Security Score</div><div class="stat-val" id="dashScore">—</div><div class="stat-sub">Grade: <span id="dashGrade">—</span></div></div>
-    <div class="stat-card" style="--accent-color:var(--red)"><div class="stat-label">Open Risks</div><div class="stat-val" id="dashRisks">—</div><div class="stat-sub">Across all categories</div></div>
-    <div class="stat-card" style="--accent-color:var(--blue)"><div class="stat-label">Vendors Monitored</div><div class="stat-val" id="dashVendors">—</div></div>
-    <div class="stat-card" style="--accent-color:var(--warn)"><div class="stat-label">ML Anomalies</div><div class="stat-val" id="dashAnomalies">—</div><div class="stat-sub">Detected by AI</div></div>
+    <div class="stat-card" style="--accent-color:var(--accent)">
+      <div class="stat-label">Security Score</div>
+      <div class="stat-val" id="dashScore">—</div>
+      <div class="stat-sub" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Grade: <span id="dashGrade">—</span></span>
+        <span class="kpi-trend up" id="kpiTrendScore">↑ +3%</span>
+      </div>
+    </div>
+    <div class="stat-card" style="--accent-color:var(--red)">
+      <div class="stat-label">Open Risks</div>
+      <div class="stat-val" id="dashRisks">—</div>
+      <div class="stat-sub" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Across categories</span>
+        <span class="kpi-trend down" id="kpiTrendRisks">↓ -2</span>
+      </div>
+    </div>
+    <div class="stat-card" style="--accent-color:var(--blue)">
+      <div class="stat-label">Vendors Monitored</div>
+      <div class="stat-val" id="dashVendors">—</div>
+      <div class="stat-sub" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Ecosystem</span>
+        <span class="kpi-trend up" id="kpiTrendVendors">↑ +1</span>
+      </div>
+    </div>
+    <div class="stat-card" style="--accent-color:var(--warn)">
+      <div class="stat-label">ML Anomalies</div>
+      <div class="stat-val" id="dashAnomalies">—</div>
+      <div class="stat-sub" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Detected by AI</span>
+        <span class="kpi-trend down" id="kpiTrendAnomalies">↓ -15%</span>
+      </div>
+    </div>
   </div>
   <div class="grid-2" style="margin-bottom:18px;">
     <div class="card card-pad">
@@ -115,7 +187,7 @@
           <span class="chip chip-ok" id="ringGrade" style="margin-top:8px;display:inline-block;">B+</span>
         </div>
         <div style="flex:1;">
-          <div style="font-size:13px;font-weight:700;margin-bottom:14px;">Score Trend (7 days)</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px;">Score Trend (30 days)</div>
           <div style="height:100px;"><canvas id="scoreTrendChart"></canvas></div>
           <div style="font-size:11px;color:var(--text2);margin-top:8px;">Better than <strong style="color:var(--text);" id="industryPct">73%</strong> of companies in your industry</div>
         </div>
@@ -154,19 +226,13 @@
       <div id="quickScanResult" style="display:none;"></div>
     </div>
   </div>
-  <!-- Demo Attack Simulator -->
-  <div class="card card-pad">
+  <!-- Recent Activity Timeline -->
+  <div class="card card-pad" style="margin-bottom:18px;">
     <div class="section-hd" style="margin-bottom:12px;">
-      <div class="section-title">🎭 Demo: Simulate Cyber Attack</div>
-      <span style="font-size:11px;color:var(--text3);">For college demonstration</span>
+      <div class="section-title">📋 Recent Activity</div>
+      <button class="btn btn-ghost btn-sm" onclick="goPage('admin',document.querySelector('[data-page=admin]'))">View logs →</button>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-danger" onclick="simulateAttack('brute_force')">🔒 Brute Force</button>
-      <button class="btn btn-danger" onclick="simulateAttack('data_exfiltration')">📤 Data Exfiltration</button>
-      <button class="btn btn-danger" onclick="simulateAttack('insider_threat')">👤 Insider Threat</button>
-      <button class="btn btn-danger" onclick="simulateAttack('credential_stuffing')">🔑 Credential Stuffing</button>
-      <button class="btn btn-ghost" onclick="classifyThreat()">🤖 ML Classify Text</button>
-    </div>
+    <div id="dashActivityFeed" style="display:flex;flex-direction:column;gap:6px;"><div style="text-align:center;padding:20px;color:var(--text3);"><div class="spinner"></div></div></div>
   </div>
 </div>
 
@@ -246,10 +312,10 @@
 <div class="page page-hidden" id="page-breachsight">
   <div class="section-hd" style="margin-bottom:16px;"><div class="section-title">BreachSight — Attack Surface</div></div>
   <div class="grid-4" style="margin-bottom:18px;">
-    <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Monitored Domains</div><div class="stat-val">23</div></div>
-    <div class="stat-card" style="--accent-color:var(--blue)"><div class="stat-label">IP Addresses</div><div class="stat-val">142</div></div>
-    <div class="stat-card" style="--accent-color:var(--red)"><div class="stat-label">Exposed Services</div><div class="stat-val">8</div></div>
-    <div class="stat-card" style="--accent-color:var(--warn)"><div class="stat-label">Expiring SSL Certs</div><div class="stat-val">2</div></div>
+    <div class="stat-card" style="--accent-color:var(--accent)" id="bsDomainsCard"><div class="stat-label">Monitored Domains</div><div class="stat-val" id="bsDomains">—</div></div>
+    <div class="stat-card" style="--accent-color:var(--blue)" id="bsIPCard"><div class="stat-label">IP Addresses</div><div class="stat-val" id="bsIPs">—</div></div>
+    <div class="stat-card" style="--accent-color:var(--red)" id="bsServicesCard"><div class="stat-label">Exposed Services</div><div class="stat-val" id="bsServices">—</div></div>
+    <div class="stat-card" style="--accent-color:var(--warn)" id="bsSSLCard"><div class="stat-label">Expiring SSL Certs</div><div class="stat-val" id="bsSSL">—</div></div>
   </div>
   <div class="card card-pad">
     <div class="section-hd" style="margin-bottom:12px;"><div class="section-title">Scan a Domain (Real Check)</div></div>
@@ -264,9 +330,9 @@
 <!-- ATTACK SURFACE -->
 <div class="page page-hidden" id="page-attack">
   <div class="grid-3" style="margin-bottom:18px;">
-    <div class="stat-card" style="--accent-color:var(--red)" onclick="filterAttackSurface('critical')"><div class="stat-label">Open Ports (High Risk)</div><div class="stat-val">8</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Click to filter Critical</div></div>
-    <div class="stat-card" style="--accent-color:var(--blue)" onclick="filterAttackSurface('medium')"><div class="stat-label">Subdomains</div><div class="stat-val">67</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Click to filter Medium</div></div>
-    <div class="stat-card" style="--accent-color:var(--warn)" onclick="filterAttackSurface('high')"><div class="stat-label">CVEs Identified</div><div class="stat-val">14</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Click to filter High</div></div>
+    <div class="stat-card" style="--accent-color:var(--red)" onclick="filterAttackSurface('critical')"><div class="stat-label">Open Ports (High Risk)</div><div class="stat-val" id="atk-ports">—</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Click to filter Critical</div></div>
+    <div class="stat-card" style="--accent-color:var(--blue)" onclick="filterAttackSurface('medium')"><div class="stat-label">Subdomains</div><div class="stat-val" id="atk-subdomains">—</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Click to filter Medium</div></div>
+    <div class="stat-card" style="--accent-color:var(--warn)" onclick="filterAttackSurface('high')"><div class="stat-label">CVEs Identified</div><div class="stat-val" id="atk-cves">—</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Click to filter High</div></div>
   </div>
   <div class="card">
     <div class="card-head"><div class="card-title">Attack Surface Map</div><button class="btn btn-ghost btn-sm" onclick="exportAttack()">⬇ Export</button></div>
@@ -420,7 +486,22 @@
 
 <!-- REPORTS -->
 <div class="page page-hidden" id="page-reports">
-  <div class="section-hd" style="margin-bottom:16px;"><div class="section-title">Reports</div><button class="btn btn-primary" onclick="openGenReportModal()">+ Generate</button></div>
+  <div class="section-hd" style="margin-bottom:16px;">
+    <div class="section-title">Reports</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <select class="inp btn-sm" id="reportTypeFilter" onchange="loadReports()" style="width:180px;">
+        <option value="">All types</option>
+        <option value="security-posture">Security Posture</option>
+        <option value="vendor-risk">Vendor Risk</option>
+        <option value="compliance">Compliance</option>
+        <option value="incident">Incident &amp; Threat</option>
+        <option value="executive-summary">Executive Summary</option>
+      </select>
+      <input class="inp btn-sm" type="date" id="reportDateFrom" onchange="loadReports()" style="width:140px;" title="From date">
+      <input class="inp btn-sm" type="date" id="reportDateTo" onchange="loadReports()" style="width:140px;" title="To date">
+      <button class="btn btn-primary" onclick="openGenReportModal()">+ Generate</button>
+    </div>
+  </div>
   <div class="card"><div class="card-head"><div class="card-title">Report History</div></div><div id="reportList"></div></div>
 </div>
 
@@ -475,7 +556,8 @@
     <div style="padding:20px;display:flex;flex-direction:column;gap:12px;">
       <input class="form-input" id="nu-name" placeholder="Full Name">
       <input class="form-input" id="nu-email" placeholder="Email" type="email">
-      <input class="form-input" id="nu-pass" placeholder="Password" type="password" value="password123">
+      <input class="form-input" id="nu-pass" placeholder="Password (min 8 chars, 1 uppercase, 1 digit)" type="password" autocomplete="new-password">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:-6px;">Must contain at least 8 chars, 1 uppercase letter (A-Z), and 1 number (0-9).</div>
       <input class="form-input" id="nu-role" placeholder="Role (e.g. IT Analyst)">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="nu-admin"> Make Admin
@@ -499,22 +581,127 @@
       <div class="settings-section"><div class="settings-title">Account</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div><label class="lbl">Full Name</label><input class="inp" id="set-name"></div>
-          <div><label class="lbl">Email</label><input class="inp" id="set-email"></div>
-          <div><label class="lbl">Role</label><select class="inp" id="set-role"><option>Security Analyst</option><option>CISO</option><option>IT Manager</option></select></div>
-          <div><label class="lbl">New Password</label><input class="inp" type="password" id="set-password" placeholder="Leave blank to keep current"></div>
+          <div><label class="lbl">Email</label><input class="inp" id="set-email" readonly style="opacity:0.6;"></div>
+          <div><label class="lbl">Role</label><input class="inp" id="set-role"></div>
+          <div><label class="lbl">New Password</label><input class="inp" type="password" id="set-password" placeholder="Leave blank to keep current" autocomplete="new-password"></div>
         </div>
+      </div>
+      <!-- Audit Log Viewer -->
+      <div class="settings-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div class="settings-title" style="margin-bottom:0;">My Recent Activity</div>
+          <span id="prefsSaved" class="save-indicator">Saved ✓</span>
+        </div>
+        <div id="settingsAuditLog" style="display:flex;flex-direction:column;gap:4px;max-height:280px;overflow-y:auto;"><div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">Loading…</div></div>
       </div>
     </div>
     <div>
       <div class="settings-section"><div class="settings-title">Notifications</div>
-        <div class="settings-row"><div><div style="font-weight:600;">Critical Alerts</div><div style="font-size:12px;color:var(--text2);">Immediate notification</div></div><label class="toggle"><input type="checkbox" id="notif-critical" checked><span class="toggle-slider"></span></label></div>
-        <div class="settings-row"><div><div style="font-weight:600;">Data Leaks</div><div style="font-size:12px;color:var(--text2);">Instant alert on new leaks</div></div><label class="toggle"><input type="checkbox" id="notif-leaks" checked><span class="toggle-slider"></span></label></div>
-        <div class="settings-row"><div><div style="font-weight:600;">ML Anomalies</div><div style="font-size:12px;color:var(--text2);">Alert when ML detects threats</div></div><label class="toggle"><input type="checkbox" id="notif-ml" checked><span class="toggle-slider"></span></label></div>
+        <div class="settings-row"><div><div style="font-weight:600;">Critical Alerts</div><div style="font-size:12px;color:var(--text2);">Immediate notification</div></div><label class="toggle"><input type="checkbox" id="notif-critical-toggle" onchange="togglePref('notif-critical')" checked><span class="toggle-slider"></span></label></div>
+        <div class="settings-row"><div><div style="font-weight:600;">Data Leaks</div><div style="font-size:12px;color:var(--text2);">Instant alert on new leaks</div></div><label class="toggle"><input type="checkbox" id="notif-leaks-toggle" onchange="togglePref('notif-leaks')" checked><span class="toggle-slider"></span></label></div>
+        <div class="settings-row"><div><div style="font-weight:600;">ML Anomalies</div><div style="font-size:12px;color:var(--text2);">Alert when ML detects threats</div></div><label class="toggle"><input type="checkbox" id="notif-ml-toggle" onchange="togglePref('notif-ml')" checked><span class="toggle-slider"></span></label></div>
       </div>
       <div class="settings-section"><div class="settings-title">ML Engine</div>
-        <div class="settings-row"><div><div style="font-weight:600;">Auto-retrain</div><div style="font-size:12px;color:var(--text2);">Retrain models weekly</div></div><label class="toggle"><input type="checkbox" id="ml-autotrain" checked><span class="toggle-slider"></span></label></div>
-        <div class="settings-row"><div><div style="font-weight:600;">Auto-scan vendors</div><div style="font-size:12px;color:var(--text2);">Weekly ML risk scoring</div></div><label class="toggle"><input type="checkbox" id="ml-vendorscan" checked><span class="toggle-slider"></span></label></div>
+        <div class="settings-row"><div><div style="font-weight:600;">Auto-retrain</div><div style="font-size:12px;color:var(--text2);">Retrain models weekly</div></div><label class="toggle"><input type="checkbox" id="ml-autotrain-toggle" onchange="togglePref('ml-autotrain')" checked><span class="toggle-slider"></span></label></div>
+        <div class="settings-row"><div><div style="font-weight:600;">Auto-scan vendors</div><div style="font-size:12px;color:var(--text2);">Weekly ML risk scoring</div></div><label class="toggle"><input type="checkbox" id="ml-vendorscan-toggle" onchange="togglePref('ml-vendorscan')" checked><span class="toggle-slider"></span></label></div>
+        <div style="margin-top:12px;">
+          <label class="lbl">Anomaly Threshold: <span id="anomaly-threshold-val">0.70</span></label>
+          <input type="range" id="anomaly-threshold" min="0.1" max="0.99" step="0.01" value="0.7"
+            oninput="document.getElementById('anomaly-threshold-val').textContent=parseFloat(this.value).toFixed(2)"
+            onchange="togglePref('anomaly_threshold')" style="width:100%;margin-top:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);">
+            <span>Sensitive (0.1)</span><span>Conservative (0.99)</span>
+          </div>
+        </div>
       </div>
+      <div class="settings-section" style="margin-top:16px;">
+        <div class="settings-title" style="color:var(--red);">Danger Zone</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">These actions are irreversible. Proceed with caution.</div>
+        <button class="btn btn-danger" onclick="if(confirm('Delete your account? This cannot be undone.'))toast('Contact admin to delete account','warn')">Delete My Account</button>
+      </div>
+      <span id="profileSaved" class="save-indicator" style="display:block;text-align:right;margin-top:8px;">Saved ✓</span>
+    </div>
+  </div>
+</div>
+
+<!-- VPN & ZERO-TRUST PERIMETER -->
+<div class="page page-hidden" id="page-vpn">
+  <div class="grid-4" style="margin-bottom:18px;">
+    <div class="stat-card" style="--accent-color:var(--accent)">
+      <div class="stat-label">Active Secure Tunnels</div>
+      <div class="stat-val" id="vpnActiveTunnels">—</div>
+      <div class="stat-sub" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>WireGuard Node Health</span>
+        <span class="kpi-trend up">● Operational</span>
+      </div>
+    </div>
+    <div class="stat-card" style="--accent-color:var(--blue)">
+      <div class="stat-label">Zero-Trust Posture</div>
+      <div class="stat-val" id="vpnComplianceRate">—</div>
+      <div class="stat-sub">Compliance rate</div>
+    </div>
+    <div class="stat-card" style="--accent-color:var(--purple)">
+      <div class="stat-label">Secure Throughput</div>
+      <div class="stat-val" id="vpnTotalBandwidth">—</div>
+      <div class="stat-sub">Encrypted WAN Traffic</div>
+    </div>
+    <div class="stat-card" style="--accent-color:var(--green)">
+      <div class="stat-label">Avg Handshake Latency</div>
+      <div class="stat-val" id="vpnAvgLatency">—</div>
+      <div class="stat-sub">ChaCha20-Poly1305</div>
+    </div>
+  </div>
+
+  <!-- Gateway & Killswitch Status Banner -->
+  <div class="card" style="margin-bottom:18px;padding:16px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;background:linear-gradient(135deg, rgba(16,185,129,0.06), rgba(6,182,212,0.04));border:1px solid rgba(16,185,129,0.2);">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:42px;height:42px;border-radius:10px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;">🔒</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;color:var(--text1);" id="vpnGwName">CyberGuard Secure Gateway (wg0)</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">
+          Tunnel Subnet: <span style="font-family:var(--mono);color:var(--accent);" id="vpnGwIp">10.8.0.1 (10.8.0.0/24)</span> · Protocol: <span id="vpnGwProto">WireGuard</span> · DNS: <span id="vpnGwDns" style="color:#10b981;">Malware Shield Active</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-sm btn-ghost" id="vpnTestFlowBtn" onclick="runVPNConnectivityTest()" style="border:1px solid rgba(16,185,129,0.3);color:#10b981;">⚡ Test End-to-End Flow</button>
+      <button class="btn btn-sm btn-primary" id="vpnKillswitchBtn" data-enforced="true" onclick="toggleKillswitch()">🛡️ Killswitch: ENFORCED</button>
+      <button class="btn btn-sm btn-ghost" onclick="showGatewayConfig()" style="border:1px solid rgba(0,255,204,0.4);color:#00ffcc;">📥 Gateway Server (wg0.conf)</button>
+      <button class="btn btn-sm btn-ghost" onclick="openAddVPNModal()">+ Provision Client</button>
+    </div>
+  </div>
+
+  <!-- VPN Node Connections Table Card -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-weight:700;font-size:14px;color:var(--text1);">Active VPN Tunnels & Device Postures</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm btn-ghost vpn-filter-btn active" onclick="filterVPN('all', this)">All</button>
+        <button class="btn btn-sm btn-ghost vpn-filter-btn" onclick="filterVPN('connected', this)">Connected</button>
+        <button class="btn btn-sm btn-ghost vpn-filter-btn" onclick="filterVPN('disconnected', this)">Offline</button>
+        <button class="btn btn-sm btn-ghost vpn-filter-btn" onclick="filterVPN('quarantine', this)">Quarantined</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;background:rgba(255,255,255,0.02);">
+            <th style="padding:10px 14px;">User / Identity</th>
+            <th style="padding:10px 14px;">Device & Node</th>
+            <th style="padding:10px 14px;">Virtual IP</th>
+            <th style="padding:10px 14px;">Endpoint / Region</th>
+            <th style="padding:10px 14px;">Status</th>
+            <th style="padding:10px 14px;">Posture</th>
+            <th style="padding:10px 14px;">Traffic / Latency</th>
+            <th style="padding:10px 14px;text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="vpnTableBody">
+          <!-- Populated by vpn.js -->
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -523,6 +710,9 @@
 </div><!-- main-right -->
 </div><!-- layout -->
 </div><!-- app -->
+
+<!-- Mobile sidebar overlay -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileSidebar()"></div>
 
 <!-- MODALS -->
 <div class="modal-overlay" id="vendorModal" style="display:none;" onclick="closeBg(event,'vendorModal')">
@@ -622,24 +812,195 @@
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('classifyModal')">Close</button><button class="btn btn-primary" onclick="runClassify()">🤖 Classify</button></div></div>
 </div>
 
-<script src="js/config.js?v=2.1"></script>
-<script src="js/helpers.js?v=2.1"></script>
-<script src="js/auth.js?v=2.1"></script>
-<script src="js/sidebar.js?v=2.3"></script>
-<script src="js/dashboard.js?v=2.1"></script>
-<script src="js/vendors.js?v=2.1"></script>
-<script src="js/alerts.js?v=2.1"></script>
-<script src="js/leaks.js?v=2.1"></script>
-<script src="js/anomalies.js?v=2.1"></script>
-<script src="js/attack.js?v=2.1"></script>
-<script src="js/questionnaires.js?v=2.1"></script>
-<script src="js/compliance.js?v=2.1"></script>
-<script src="js/scan.js?v=2.1"></script>
-<script src="js/reports.js?v=2.1"></script>
-<script src="js/settings.js?v=2.1"></script>
-<script src="js/admin.js?v=2.2"></script>
-<script src="js/insider.js?v=2.1"></script>
-<script src="js/main.js?v=2.1"></script>
+<!-- VPN Config Modal -->
+<div class="modal-overlay" id="vpnConfModal" style="display:none;" onclick="closeBg(event,'vpnConfModal')">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-head">
+      <div class="modal-title" id="vpnConfTitle">WireGuard Client Configuration</div>
+      <div class="modal-close" onclick="closeModal('vpnConfModal')">×</div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:18px;align-items:center;margin-bottom:14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:12px;">
+        <div id="vpnQrWrapper" style="display:flex;flex-direction:column;align-items:center;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.25);flex-shrink:0;">
+          <img id="vpnQrCodeImg" src="" alt="WireGuard QR Code" style="width:120px;height:120px;display:block;">
+          <span style="color:#111;font-size:10px;font-weight:700;margin-top:4px;letter-spacing:0.3px;">MOBILE QR SCAN</span>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px;">Zero-Trust WireGuard Tunnel</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px;">
+            Scan with the official <strong>WireGuard®</strong> app on iOS / Android for 1-click mobile activation, or download the profile for Windows, macOS, or Linux.
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-ghost" id="vpnCopyBtn" onclick="copyVPNConfig()">📋 Copy Config</button>
+            <button class="btn btn-sm btn-primary" onclick="downloadVPNConfigFile()">⬇️ Download .conf</button>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Raw Interface Configuration:</div>
+      <textarea id="vpnConfText" readonly style="width:100%;height:150px;font-family:var(--mono);font-size:11px;background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:6px;padding:10px;color:var(--accent);line-height:1.5;resize:none;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('vpnConfModal')">Close</button>
+      <button class="btn btn-primary" onclick="downloadVPNConfigFile()">⬇️ Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- VPN Provision Modal -->
+<div class="modal-overlay" id="vpnProvisionModal" style="display:none;" onclick="closeBg(event,'vpnProvisionModal')">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <div class="modal-title">Provision New VPN Client Node</div>
+      <div class="modal-close" onclick="closeModal('vpnProvisionModal')">×</div>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;"><label class="lbl">Employee / User Name*</label><input class="inp" id="vpn-prov-name" placeholder="e.g. John Doe"></div>
+      <div style="margin-bottom:12px;"><label class="lbl">Corporate Email*</label><input class="inp" id="vpn-prov-email" placeholder="john@company.com"></div>
+      <div style="margin-bottom:12px;"><label class="lbl">Device Hostname / Description*</label><input class="inp" id="vpn-prov-device" placeholder="e.g. MacBook-Pro-John"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label class="lbl">Protocol</label>
+          <select class="inp" id="vpn-prov-proto">
+            <option value="WireGuard">WireGuard (High Perf)</option>
+            <option value="OpenVPN">OpenVPN (Legacy Fallback)</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Gateway Region</label>
+          <select class="inp" id="vpn-prov-loc">
+            <option value="US-East (Virginia Primary)">US-East Gateway</option>
+            <option value="EU-Central (Frankfurt)">EU-Central Gateway</option>
+            <option value="AP-South (Mumbai Hub)">AP-South Gateway</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('vpnProvisionModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitProvisionVPN()">Provision Node</button>
+    </div>
+  </div>
+</div>
+
+<!-- Zero-Trust VPN Authenticator Modal -->
+<div class="modal-overlay" id="vpnMfaModal" style="display:none;" onclick="closeBg(event,'vpnMfaModal')">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <div class="modal-title" style="display:flex;align-items:center;gap:8px;">
+        <span style="color:#00ffcc;">🔐</span> Zero-Trust Authenticator Verification
+      </div>
+      <div class="modal-close" onclick="closeModal('vpnMfaModal')">×</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mfaConnId">
+      <div style="margin-bottom:14px;padding:10px 14px;background:rgba(0,255,204,0.06);border:1px solid rgba(0,255,204,0.25);border-radius:8px;">
+        <div style="font-size:12px;font-weight:700;color:#00ffcc;margin-bottom:2px;" id="mfaDeviceLabel">Device: Galaxy-Book-James</div>
+        <div style="font-size:11px;color:var(--text2);">Identity: <span id="mfaUserLabel">james@company.com</span> · Virtual IP: <span id="mfaIpLabel">10.8.0.6</span></div>
+      </div>
+
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px solid var(--border);">
+        <div style="background:#fff;padding:4px;border-radius:6px;flex-shrink:0;">
+          <img id="mfaQrImg" src="" alt="Authenticator QR" style="width:110px;height:110px;display:block;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:4px;">1. Scan with Authenticator App</div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.4;margin-bottom:6px;">
+            Open <strong>Google Authenticator</strong>, <strong>Microsoft Authenticator</strong>, or <strong>Authy</strong> on your phone and scan this QR code.
+          </div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);word-break:break-all;">
+            Key: <span id="mfaSecretKey" style="color:var(--text1);"></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label class="lbl" style="font-size:12px;margin-bottom:6px;">2. Enter 6-Digit Verification Code</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input class="inp" id="mfaCodeInput" type="text" maxlength="6" placeholder="000000" style="text-align:center;font-size:24px;letter-spacing:6px;font-family:var(--mono);font-weight:700;padding:8px;color:#00ffcc;">
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;display:flex;justify-content:space-between;">
+          <span>Rotates every 30 seconds</span>
+          <span style="color:#10b981;cursor:pointer;font-weight:600;" onclick="useTestCode()">⚡ Auto-fill test code (<span id="mfaTestCodePreview"></span>)</span>
+        </div>
+      </div>
+
+      <div id="mfaFeedback" style="display:none;padding:10px;border-radius:6px;font-size:12px;margin-bottom:12px;"></div>
+    </div>
+    <div class="modal-footer" style="display:flex;justify-content:space-between;">
+      <button class="btn btn-ghost" onclick="closeModal('vpnMfaModal')">Cancel</button>
+      <button class="btn btn-primary" id="mfaVerifyBtn" style="background:#00ffcc;color:#0d1117;font-weight:700;border:none;" onclick="submitMfaVerify()">
+        Verify & Authorize Tunnel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Zero-Trust Normal Usage Modal -->
+<div class="modal-overlay" id="vpnNormalUsageModal" style="display:none;" onclick="closeBg(event,'vpnNormalUsageModal')">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <div class="modal-title" id="nuModalTitle" style="display:flex;align-items:center;gap:8px;">
+        <span style="color:#10b981;">🌐</span> Normal Usage — Enterprise Network
+      </div>
+      <div class="modal-close" onclick="closeModal('vpnNormalUsageModal')">×</div>
+    </div>
+    <div class="modal-body" id="nuModalBody">
+      <!-- Populated dynamically -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('vpnNormalUsageModal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- WireGuard Server Gateway Config Modal -->
+<div class="modal-overlay" id="vpnGatewayModal" style="display:none;" onclick="closeBg(event,'vpnGatewayModal')">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-head">
+      <div class="modal-title" id="vpnGwConfTitle" style="display:flex;align-items:center;gap:8px;">
+        <span>🔒</span> Server Gateway Configuration (wg0.conf)
+      </div>
+      <div class="modal-close" onclick="closeModal('vpnGatewayModal')">×</div>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5;">
+        This is the complete <strong>WireGuard Gateway Server configuration</strong> including all registered peers.
+        Run this on your Linux Gateway (<code>/etc/wireguard/wg0.conf</code>) or import it into WireGuard on this machine as <code>cyberguard-gateway.conf</code>.
+      </div>
+      <textarea id="vpnGwConfText" readonly style="width:100%;height:220px;font-family:var(--mono);font-size:11px;background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:6px;padding:10px;color:#00ffcc;line-height:1.5;resize:none;"></textarea>
+    </div>
+    <div class="modal-footer" style="display:flex;justify-content:space-between;">
+      <button class="btn btn-ghost" onclick="closeModal('vpnGatewayModal')">Close</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm btn-ghost" id="vpnGwCopyBtn" onclick="copyGatewayConfig()">📋 Copy Server Config</button>
+        <button class="btn btn-sm btn-primary" onclick="downloadGatewayConfigFile()">⬇️ Download cyberguard-gateway.conf</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js?v=2.5"></script>
+<script src="js/helpers.js?v=2.5"></script>
+<script src="js/auth.js?v=2.5"></script>
+<script src="js/notifications.js?v=2.5"></script>
+<script src="js/sidebar.js?v=2.5"></script>
+<script src="js/dashboard.js?v=2.5"></script>
+<script src="js/vendors.js?v=2.5"></script>
+<script src="js/alerts.js?v=2.5"></script>
+<script src="js/leaks.js?v=2.5"></script>
+<script src="js/anomalies.js?v=2.5"></script>
+<script src="js/attack.js?v=2.5"></script>
+<script src="js/questionnaires.js?v=2.5"></script>
+<script src="js/compliance.js?v=2.5"></script>
+<script src="js/scan.js?v=2.5"></script>
+<script src="js/reports.js?v=2.5"></script>
+<script src="js/settings.js?v=2.5"></script>
+<script src="js/admin.js?v=2.5"></script>
+<script src="js/insider.js?v=2.5"></script>
+<script src="js/threat_detection.js?v=3.0"></script>
+<script src="js/vpn.js?v=3.0"></script>
+<script src="js/main.js?v=2.5"></script>
+<script src="js/keyboard.js?v=2.5"></script>
 </body>
 </html>
 

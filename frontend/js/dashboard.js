@@ -1,11 +1,12 @@
 // CyberGuard v2.0 — Dashboard
 let scoreTrendChart = null, riskDonutChart = null;
+let _badgePollTimer = null;
 
 const DEMO_DATA = {
   dashboard: {score:742,grade:"B+",openAlerts:4,criticalAlerts:3,vendorCount:6,activeLeaks:2,anomaliesDetected:11,industryPct:73,
-    scoreTrend:[710,720,715,730,738,740,742],
+    scoreTrend:[710,720,715,730,735,738,740,738,742,745,740,738,742,748,750,748,744,742,745,748,750,752,748,745,742,744,748,750,748,742],
     riskDist:{critical:3,high:1,medium:2,low:0},
-    mlStatus:{anomalyDetector:{status:"active",model:"Isolation Forest"},vendorRiskScorer:{status:"active",model:"Random Forest"},threatClassifier:{status:"active",model:"Naive Bayes"}}},
+    mlStatus:{anomalyDetector:{status:"active",model:"Isolation Forest",description:"Detects unusual user behavior patterns"},vendorRiskScorer:{status:"active",model:"Random Forest",description:"Scores vendor risk from 0–950"},threatClassifier:{status:"active",model:"Naive Bayes",description:"Classifies threat text into categories"}}},
   vendors:[
     {id:1,name:"Salesforce",domain:"salesforce.com",category:"CRM",criticality:"Critical",score:880,issues:2,status:"monitored",trend:"+5",risk:"low",mlRisk:"low"},
     {id:2,name:"AWS",domain:"aws.amazon.com",category:"Cloud Infrastructure",criticality:"Critical",score:912,issues:1,status:"monitored",trend:"+2",risk:"low",mlRisk:"low"},
@@ -25,72 +26,88 @@ const DEMO_DATA = {
     {id:1,title:"Corporate credentials on BreachForums",severity:"critical",source:"Dark Web",credentials:2,records:0,status:"investigating",details:"Credentials found in breach dump.",createdAt:new Date().toISOString()},
     {id:2,title:"API keys on Pastebin",severity:"high",source:"Paste Site",credentials:0,records:0,status:"open",details:"API keys found publicly.",createdAt:new Date().toISOString()}
   ],
-  questionnaires:[
-    {id:1,title:"SOC 2 Assessment",framework:"SOC 2",vendor:"CloudHostPro",total:21,answered:15,status:"in_progress",due:"2026-04-20",percent:71},
-    {id:2,title:"GDPR Compliance Review",framework:"GDPR",vendor:"",total:11,answered:11,status:"completed",due:"2026-02-28",percent:100}
-  ],
-  logs: Array.from({length:20},(_,i)=>({id:i+1,userEmail:"admin@company.com",action:["login","view_dashboard","export_report","scan_domain"][i%4],ipAddress:"192.168.1.10",timestamp:new Date(Date.now()-i*3600000).toISOString(),isAnomaly:i<3,anomalyScore:i<3?0.92:0.1}))
+  logs: Array.from({length:20},(_,i)=>({id:i+1,userEmail:["admin@company.com","priya@company.com","rahul@company.com"][i%3],action:["login","view_dashboard","export_report","scan_domain","add_vendor","update_alert"][i%6],ipAddress:"192.168.1."+((i*7+10)%80),timestamp:new Date(Date.now()-i*3600000).toISOString(),isAnomaly:i<3,anomalyScore:i<3?0.92:0.1}))
 };
 
+// ── Badge refresh (every 30s) ─────────────────────────────────
 async function updateBadges() {
   try {
-    const [alerts, leaks, logs] = await Promise.all([
+    const [alerts, leaks, logs, vendors] = await Promise.all([
       api("GET", "/alerts/?status=open"),
       api("GET", "/leaks/"),
-      api("GET", "/logs/?limit=1")
+      api("GET", "/logs/?limit=1"),
+      api("GET", "/vendors/stats")
     ]);
     const setB = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    setB("badge-alerts", alerts.open || 0);
-    setB("alertDot", alerts.open || 0);
-    setB("badge-leaks", leaks.active || 0);
+    setB("badge-alerts",    alerts.open    || 0);
+    setB("alertDot",        alerts.open    || 0);
+    setB("badge-leaks",     leaks.active   || 0);
     setB("badge-anomalies", logs.anomalyCount || 0);
-    const vendors = await api("GET", "/vendors/stats");
-    setB("badge-vendors", vendors.riskDistribution?.critical || 0);
-  } catch (e) {
-    const el = document.getElementById("qList");
-    if (el) el.innerHTML = DEMO_DATA.questionnaires.map(q => {
-      const pct = q.percent;
-      const statusColor = {completed:"var(--accent)",in_progress:"var(--blue)",pending:"var(--warn)"}[q.status]||"var(--text2)";
-      return `<div class="q-card">
-        <div style="width:38px;height:38px;border-radius:8px;background:var(--surf3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📋</div>
-        <div style="flex:1;"><div style="font-size:13px;font-weight:600;margin-bottom:2px;">${q.title}</div><div style="font-size:11px;color:var(--text2);">${q.framework} · ${q.vendor||"Internal"} · Due ${q.due||"—"}</div></div>
-        <div style="min-width:90px;text-align:right;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px;">${pct}%</div><div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${statusColor};"></div></div><div style="font-size:10px;color:${statusColor};margin-top:3px;">${q.status.replace("_"," ")}</div></div>
-      </div>`;
-    }).join("");
-  }
+    setB("badge-vendors",   vendors.riskDistribution?.critical || 0);
+  } catch (e) { /* silently ignore — demo data still visible */ }
 }
 
+function startBadgePolling() {
+  if (_badgePollTimer) clearInterval(_badgePollTimer);
+  _badgePollTimer = setInterval(updateBadges, 30000);
+}
+
+// ── Dashboard loader ──────────────────────────────────────────
 async function loadDashboard() {
   try {
     const d = await api("GET", "/dashboard/summary");
-    document.getElementById("dashScore").textContent = d.score;
-    document.getElementById("dashGrade").textContent = d.grade;
-    document.getElementById("dashRisks").textContent = d.openAlerts;
-    document.getElementById("dashVendors").textContent = d.vendorCount;
+    document.getElementById("dashScore").textContent     = d.score;
+    document.getElementById("dashGrade").textContent     = d.grade;
+    document.getElementById("dashRisks").textContent     = d.openAlerts;
+    document.getElementById("dashVendors").textContent   = d.vendorCount;
     document.getElementById("dashAnomalies").textContent = d.anomaliesDetected;
-    document.getElementById("industryPct").textContent = d.industryPct + "%";
-    document.getElementById("ringVal").textContent = d.score;
-    document.getElementById("ringGrade").textContent = "Grade: " + d.grade;
+    document.getElementById("industryPct").textContent   = d.industryPct + "%";
+    document.getElementById("ringVal").textContent       = d.score;
+    document.getElementById("ringGrade").textContent     = "Grade: " + d.grade;
+
+    // Calculate score KPI trend vs 7 days ago
+    if (d.scoreTrend && d.scoreTrend.length >= 7) {
+      const past = d.scoreTrend[d.scoreTrend.length - 7];
+      const diff = d.score - past;
+      const pct = past > 0 ? ((diff / past) * 100).toFixed(1) : "0";
+      const el = document.getElementById("kpiTrendScore");
+      if (el) {
+        el.className = `kpi-trend ${diff >= 0 ? "up" : "down"}`;
+        el.textContent = `${diff >= 0 ? "↑ +" : "↓ "}${pct}%`;
+      }
+    }
+
     animateRing(d.score, 950);
     renderScoreTrend(d.scoreTrend || []);
-    renderRiskDonut(d.riskDist || {});
-    renderMLStatus(d.mlStatus || {});
+    renderRiskDonut(d.riskDist  || {});
+    renderMLStatus(d.mlStatus   || {});
     await loadDashAlerts();
+    await loadDashActivity();
   } catch (e) {
     const d = DEMO_DATA.dashboard;
-    document.getElementById("dashScore").textContent = d.score;
-    document.getElementById("dashGrade").textContent = d.grade;
-    document.getElementById("dashRisks").textContent = d.openAlerts;
-    document.getElementById("dashVendors").textContent = d.vendorCount;
+    document.getElementById("dashScore").textContent     = d.score;
+    document.getElementById("dashGrade").textContent     = d.grade;
+    document.getElementById("dashRisks").textContent     = d.openAlerts;
+    document.getElementById("dashVendors").textContent   = d.vendorCount;
     document.getElementById("dashAnomalies").textContent = d.anomaliesDetected;
-    document.getElementById("industryPct").textContent = d.industryPct + "%";
-    document.getElementById("ringVal").textContent = d.score;
-    document.getElementById("ringGrade").textContent = "Grade: " + d.grade;
+    document.getElementById("industryPct").textContent   = d.industryPct + "%";
+    document.getElementById("ringVal").textContent       = d.score;
+    document.getElementById("ringGrade").textContent     = "Grade: " + d.grade;
+    const el = document.getElementById("kpiTrendScore");
+    if (el) { el.className = "kpi-trend up"; el.textContent = "↑ +3.2%"; }
+    document.getElementById("dashGrade").textContent     = d.grade;
+    document.getElementById("dashRisks").textContent     = d.openAlerts;
+    document.getElementById("dashVendors").textContent   = d.vendorCount;
+    document.getElementById("dashAnomalies").textContent = d.anomaliesDetected;
+    document.getElementById("industryPct").textContent   = d.industryPct + "%";
+    document.getElementById("ringVal").textContent       = d.score;
+    document.getElementById("ringGrade").textContent     = "Grade: " + d.grade;
     animateRing(d.score, 950);
     renderScoreTrend(d.scoreTrend);
     renderRiskDonut(d.riskDist);
     renderMLStatus(d.mlStatus);
     loadDashAlerts();
+    renderDashActivity(DEMO_DATA.logs.slice(0, 10));
   }
 }
 
@@ -102,15 +119,49 @@ function animateRing(val, max) {
   setTimeout(() => { arc.style.strokeDashoffset = offset; }, 100);
 }
 
+// ── Score Trend — uses up to 30 data points ───────────────────
 function renderScoreTrend(trend) {
   const ctx = document.getElementById("scoreTrendChart");
   if (!ctx) return;
   if (scoreTrendChart) scoreTrendChart.destroy();
-  const labels = ["Day 1","Day 2","Day 3","Day 4","Day 5","Day 6","Today"].slice(-trend.length);
+
+  const n = trend.length;
+  let labels;
+  if (n <= 7) {
+    labels = ["Day 1","Day 2","Day 3","Day 4","Day 5","Day 6","Today"].slice(-n);
+  } else {
+    // Build "X days ago" labels for the full 30-day window
+    labels = Array.from({length: n}, (_, i) => {
+      const daysAgo = n - 1 - i;
+      return daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo}d ago`;
+    });
+  }
+
   scoreTrendChart = new Chart(ctx, {
     type: "line",
-    data: { labels, datasets: [{ data: trend, borderColor: "#00e5b0", backgroundColor: "rgba(0,229,176,0.08)", fill: true, tension: 0.4, pointRadius: 3 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#8896b3", font: { size: 10 } } }, y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#8896b3", font: { size: 10 } } } } }
+    data: {
+      labels,
+      datasets: [{
+        data: trend,
+        borderColor: "#00e5b0",
+        backgroundColor: "rgba(0,229,176,0.08)",
+        fill: true,
+        tension: 0.4,
+        pointRadius: n > 14 ? 1 : 3,
+        pointHoverRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        label: ctx => `Score: ${ctx.parsed.y}`
+      }}},
+      scales: {
+        x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#8896b3", font: { size: 9 }, maxTicksLimit: 8 } },
+        y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#8896b3", font: { size: 10 } } }
+      }
+    }
   });
 }
 
@@ -139,11 +190,12 @@ function renderMLStatus(ml) {
         <span style="width:8px;height:8px;border-radius:50%;background:${v.status==='active'?'var(--accent)':'var(--red)'};animation:${v.status==='active'?'pulse 1.5s infinite':'none'};flex-shrink:0;"></span>
         <span style="font-size:12px;font-weight:700;">${v.model}</span>
       </div>
-      <div style="font-size:11px;color:var(--text2);">${v.description}</div>
+      <div style="font-size:11px;color:var(--text2);">${v.description || ''}</div>
       <div style="font-size:10px;color:${v.status==='active'?'var(--accent)':'var(--red)'};margin-top:4px;font-family:var(--mono);">${v.status.toUpperCase()}</div>
     </div>`).join("");
 }
 
+// ── Recent Alerts (dashboard panel) ──────────────────────────
 async function loadDashAlerts() {
   const el = document.getElementById("dashAlertsList");
   if (!el) return;
@@ -153,6 +205,58 @@ async function loadDashAlerts() {
     el.innerHTML = alerts.length ? alerts.map(a => alertHTML(a, true)).join("") :
       '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No open alerts</div></div>';
   } catch (e) {
-    if (el) el.innerHTML = DEMO_DATA.alerts.slice(0,5).map(a=>alertHTML(a,true)).join("");
+    el.innerHTML = DEMO_DATA.alerts.slice(0,5).map(a => alertHTML(a, true)).join("");
   }
 }
+
+// ── Recent Activity Timeline ──────────────────────────────────
+async function loadDashActivity() {
+  try {
+    const d = await api("GET", "/logs/?limit=10&skip=0");
+    const logs = d.logs || [];
+    renderDashActivity(logs);
+  } catch (e) {
+    renderDashActivity(DEMO_DATA.logs.slice(0, 10));
+  }
+}
+
+function renderDashActivity(logs) {
+  const el = document.getElementById("dashActivityFeed");
+  if (!el) return;
+  if (!logs.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No recent activity</div></div>';
+    return;
+  }
+  const actionIcon = { login:"🔐", logout:"👋", view_dashboard:"📊", export_report:"📤",
+    add_vendor:"➕", scan_domain:"🔍", access_settings:"⚙️", view_vendor:"👁️",
+    update_alert:"🔔", delete_alert:"🗑️", download_report:"⬇️", desktop_monitor:"🖥️" };
+  el.innerHTML = logs.map(l => {
+    const icon = actionIcon[l.action] || "📝";
+    const anomBadge = l.isAnomaly
+      ? `<span style="font-size:9px;background:rgba(244,63,94,0.15);color:var(--red);padding:1px 5px;border-radius:3px;font-family:var(--mono);">ANOMALY ${(l.anomalyScore*100).toFixed(0)}%</span>`
+      : '';
+    const relTime = _relTime ? _relTime(l.timestamp) : l.timestamp?.substring(11,16) || '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;background:var(--surf2);border:1px solid var(--border);">
+      <span style="font-size:14px;flex-shrink:0;">${icon}</span>
+      <div style="flex:1;min-width:0;">
+        <span style="font-size:12px;font-weight:600;">${l.userEmail?.split('@')[0] || 'User'}</span>
+        <span style="font-size:11px;color:var(--text2);"> · ${(l.action||'').replace(/_/g,' ')}</span>
+        ${anomBadge}
+      </div>
+      <span style="font-size:10px;color:var(--text3);white-space:nowrap;">${relTime}</span>
+    </div>`;
+  }).join("");
+}
+
+// ── Attack Surface stat cards ─────────────────────────────────
+function updateAttackSurfaceStats() {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  ATTACK_DATA.forEach(([,risk]) => { if (counts[risk] !== undefined) counts[risk]++; });
+  const setEl = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+  setEl('atk-ports',      counts.critical);
+  setEl('atk-subdomains', ATTACK_DATA.length * 9);   // realistic subdomain multiplier
+  setEl('atk-cves',       ATTACK_DATA.filter(([,,,,cve]) => cve !== '—').length);
+}
+
+window.updateAttackSurfaceStats = updateAttackSurfaceStats;
+window.startBadgePolling = startBadgePolling;

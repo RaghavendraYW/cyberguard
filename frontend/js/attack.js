@@ -69,6 +69,8 @@ function renderAttack(filterRisk) {
 function filterAttackSurface(level) {
   if (attackFilterLevel === level) { attackFilterLevel = ""; renderAttack(); toast("Filter cleared — showing all", "info"); }
   else { attackFilterLevel = level; renderAttack(level); }
+  // Keep stat cards showing totals regardless of filter
+  if (typeof updateAttackSurfaceStats === 'function') updateAttackSurfaceStats();
 }
 function exportAttack() {
   const rows = [["Asset","Risk","Issue","Port","CVE","Remediation"],["admin.acmecorp.com","critical","RDP exposed","22,3389","CVE-2023-32019","Restrict to VPN"]];

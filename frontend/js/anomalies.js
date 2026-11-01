@@ -14,7 +14,7 @@ async function loadAnomalies() {
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2);">${l.ipAddress}</td>
       <td><div style="display:flex;align-items:center;gap:8px;"><div style="height:4px;width:60px;background:var(--surf3);border-radius:2px;"><div style="height:100%;border-radius:2px;background:${l.anomalyScore>0.7?'var(--red)':'var(--warn)'};width:${Math.round(l.anomalyScore*100)}%;"></div></div><span style="font-family:var(--mono);font-size:11px;">${(l.anomalyScore*100).toFixed(0)}%</span></div></td>
       <td style="font-size:11px;color:var(--text2);" title="${formatTimestamp(l.timestamp)}">${timeAgo(l.timestamp)}<div style="font-size:9px;color:var(--text3);">${formatTimestamp(l.timestamp)}</div></td>
-    </tr>`).join("") : `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No anomalies detected</div></div></td></tr>`;
+    </tr>`).join("") : `<tr><td colspan="5">${typeof renderEmptyState === 'function' ? renderEmptyState('anomalies', 'No anomalies detected', 'Isolation Forest AI model reports normal baseline activity.') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No anomalies detected</div></div>'}</td></tr>`;
   } catch(e) {
     const logs = DEMO_DATA.logs.filter(l=>l.isAnomaly);
     document.getElementById("totalAnomalies").textContent = logs.length;

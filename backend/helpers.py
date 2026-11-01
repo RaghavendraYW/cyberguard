@@ -1,8 +1,8 @@
 """
 CyberGuard v2.0 — Helper Functions
-Scoring, grading, serialization, and utility functions.
+Scoring, grading, serialization, IP/device detection, and utility functions.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from database import (
     VendorDB, AlertDB, LeakDB, ActivityLogDB, SecurityScoreDB
 )
@@ -65,7 +65,9 @@ def udict(u):
     return {
         "id": u.id, "name": u.name, "email": u.email, "role": u.role,
         "isAdmin": u.is_admin, "company": u.company, "domain": getattr(u, "domain", ""),
-        "initials": "".join(w[0] for w in u.name.split()[:2]).upper()
+        "initials": "".join(w[0] for w in u.name.split()[:2]).upper(),
+        "createdAt": u.created_at.isoformat() + "Z" if u.created_at else None,
+        "lastSeen": u.last_seen.isoformat() + "Z" if u.last_seen else None,
     }
 
 
@@ -75,6 +77,9 @@ def vdict(v, vendor_risk_scorer=None):
         "criticality": v.criticality, "score": v.score, "issues": v.issues,
         "status": v.status, "contact": v.contact, "notes": v.notes, "trend": v.trend,
         "lastScanned": v.last_scanned, "risk": risk_level(v.score),
+        "slaDays": v.sla_days,
+        "lastReview": v.last_review.isoformat() + "Z" if v.last_review else None,
+        "nextReview": v.next_review.isoformat() + "Z" if v.next_review else None,
         "createdAt": v.created_at.isoformat() + "Z"
     }
     if vendor_risk_scorer:
@@ -91,9 +96,12 @@ def vdict(v, vendor_risk_scorer=None):
 
 def adict(a):
     return {
-        "id": int(a.id), "title": str(a.title or ""), "severity": str(a.severity or ""), "category": str(a.category or ""),
-        "status": str(a.status or ""), "description": str(a.description or ""), "source": str(a.source or ""),
-        "mlScore": round(float(a.ml_score or 0), 3), "createdAt": a.created_at.isoformat() + "Z",
+        "id": int(a.id), "title": str(a.title or ""), "severity": str(a.severity or ""),
+        "category": str(a.category or ""), "status": str(a.status or ""),
+        "description": str(a.description or ""), "source": str(a.source or ""),
+        "assignee": str(a.assignee or ""),
+        "mlScore": round(float(a.ml_score or 0), 3),
+        "createdAt": a.created_at.isoformat() + "Z",
         "updatedAt": a.updated_at.isoformat() + "Z"
     }
 
@@ -118,7 +126,8 @@ def qdict(q):
 def logdict(l):
     return {
         "id": int(l.id), "userEmail": str(l.user_email or ""), "action": str(l.action or ""),
-        "ipAddress": str(l.ip_address or ""), "deviceInfo": str(l.device_info or ""), "page": str(l.page or ""),
+        "ipAddress": str(l.ip_address or ""), "deviceInfo": str(l.device_info or ""),
+        "page": str(l.page or ""),
         "timestamp": l.timestamp.isoformat() + "Z", "isAnomaly": bool(l.is_anomaly),
         "anomalyScore": round(float(l.anomaly_score or 0), 3)
     }

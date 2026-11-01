@@ -8,7 +8,7 @@ async function loadAlerts() {
     const el = document.getElementById("alertsList");
     if (!el) return;
     el.innerHTML = d.alerts?.length ? d.alerts.map(a => alertHTML(a)).join("") :
-      '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-text">No alerts</div></div>';
+      (typeof renderEmptyState === 'function' ? renderEmptyState('alerts', 'All clear — No alerts found', 'No active security incidents match your selected filters.') : '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-text">No alerts</div></div>');
   } catch (e) {
     const el = document.getElementById("alertsList");
     if (el) el.innerHTML = DEMO_DATA.alerts.map(a=>alertHTML(a)).join("");

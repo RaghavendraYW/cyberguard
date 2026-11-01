@@ -4,7 +4,7 @@ CyberGuard v2.0 — Anomaly Detector (Isolation Forest)
 import os
 import joblib
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone
 
 from config import ML_DIR
 
@@ -44,8 +44,8 @@ class AnomalyDetector:
         if not self.trained:
             return {"is_anomaly": False, "score": 0.0, "reason": ""}
         if hour is None:
-            hour = datetime.utcnow().hour
-        day = datetime.utcnow().weekday()
+            hour = datetime.now(timezone.utc).hour
+        day = datetime.now(timezone.utc).weekday()
         act = ACTIONS.index(action) if action in ACTIONS else 0
         X = np.array([[hour, day, act, 1]])
         pred = self.model.predict(X)[0]
@@ -55,7 +55,7 @@ class AnomalyDetector:
             reasons.append(f"Unusual hour ({hour:02d}:00)")
         if day >= 5:
             reasons.append("Weekend activity")
-        return {"is_anomaly": pred == -1, "score": round(score, 3), "reason": "; ".join(reasons) or "Normal"}
+        return {"is_anomaly": bool(pred == -1), "score": round(float(score), 3), "reason": "; ".join(reasons) or "Normal"}
 
     def retrain(self, logs):
         if len(logs) < 50:

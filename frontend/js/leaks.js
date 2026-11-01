@@ -20,7 +20,7 @@ async function loadLeaks() {
           <button class="btn btn-danger btn-sm" onclick="deleteLeak(${l.id})">🗑</button>
         </div>
       </div>`;
-    }).join("") : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No leaks detected</div></div>';
+    }).join("") : (typeof renderEmptyState === 'function' ? renderEmptyState('leaks', 'No data leaks detected', 'Dark web and paste site scanning shows no exposed credentials.') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No leaks detected</div></div>');
   } catch (e) {
     document.getElementById("activeLeaks").textContent = DEMO_DATA.leaks.filter(l=>l.status!=="resolved").length;
     document.getElementById("credExposed").textContent = DEMO_DATA.leaks.reduce((s,l)=>s+l.credentials,0);

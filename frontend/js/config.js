@@ -6,11 +6,35 @@ const API_BASE = (() => {
 let TOKEN = "", CURRENT_USER = null;
 
 async function api(method, path, body = null) {
-  const opts = { method, headers: { "Content-Type": "application/json" } };
+  const opts = {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  };
   if (TOKEN) opts.headers["Authorization"] = "Bearer " + TOKEN;
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(API_BASE + path, opts);
-  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || r.statusText); }
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    let msg = r.statusText || "Request failed";
+    if (e.detail) {
+      if (typeof e.detail === "string") {
+        msg = e.detail;
+      } else if (Array.isArray(e.detail)) {
+        msg = e.detail.map(d => (d && d.msg) ? d.msg.replace(/^Value error,\s*/i, "") : JSON.stringify(d)).join(", ");
+      } else if (typeof e.detail === "object") {
+        msg = e.detail.message || JSON.stringify(e.detail);
+      }
+    } else if (e.message) {
+      msg = typeof e.message === "string" ? e.message : JSON.stringify(e.message);
+    }
+    if (r.status === 401 && !path.includes("/auth/login")) {
+      if (typeof doLogout === "function") doLogout();
+    }
+    throw new Error(msg);
+  }
   return r.json();
 }
 

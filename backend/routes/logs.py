@@ -2,7 +2,7 @@
 CyberGuard v2.0 — Logs, Anomalies & Attack Simulation Routes
 """
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
@@ -16,19 +16,33 @@ router = APIRouter(prefix="/api/logs", tags=["logs"])
 
 
 @router.get("/")
-def list_logs(anomalies: bool = False, limit: int = 100, uid: int = Depends(get_uid), db: Session = Depends(get_db)):
+def list_logs(
+    anomalies: bool = False,
+    limit: int = 100,
+    skip: int = 0,
+    email: str = None,
+    uid: int = Depends(get_uid),
+    db: Session = Depends(get_db)
+):
     q = db.query(ActivityLogDB)
     if anomalies:
         q = q.filter_by(is_anomaly=True)
-    logs = q.order_by(ActivityLogDB.timestamp.desc()).limit(limit).all()
-    return {"logs": [logdict(l) for l in logs], "total": len(logs), "anomalyCount": db.query(ActivityLogDB).filter_by(is_anomaly=True).count()}
+    if email:
+        q = q.filter(ActivityLogDB.user_email == email)
+    total = q.count()
+    logs = q.order_by(ActivityLogDB.timestamp.desc()).offset(skip).limit(limit).all()
+    return {
+        "logs": [logdict(l) for l in logs],
+        "total": total,
+        "anomalyCount": db.query(ActivityLogDB).filter_by(is_anomaly=True).count()
+    }
 
 
 @router.post("/track")
 def track_action(req: TrackReq, request: Request, uid: int = Depends(get_uid), db: Session = Depends(get_db)):
     user = db.get(UserDB, uid)
     if user:
-        user.last_seen = datetime.utcnow()
+        user.last_seen = datetime.now(timezone.utc)
     ip = get_ip(request)
     ua = req.userAgent or request.headers.get("user-agent", "")
     device = get_device(ua)
@@ -89,7 +103,7 @@ def simulate_attack(req: SimulateReq, uid: int = Depends(get_admin), db: Session
     }
     atk = attacks.get(req.type, attacks["brute_force"])
     for i in range(3):
-        ts = datetime.utcnow().replace(hour=atk["hour"], minute=random.randint(0, 59))
+        ts = datetime.now(timezone.utc).replace(hour=atk["hour"], minute=random.randint(0, 59))
         db.add(ActivityLogDB(user_email=user.email if user else "attacker", action=atk["action"], ip_address=f"185.220.101.{random.randint(1, 99)}", device_info="Unknown", timestamp=ts, is_anomaly=True, anomaly_score=0.95))
     alert = AlertDB(title=atk["title"], severity=atk["severity"], category=atk["category"], status="open", source="ml", ml_score=0.95, description=atk["description"])
     db.add(alert)

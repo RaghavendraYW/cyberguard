@@ -122,18 +122,20 @@ async function createUser() {
   if (requiresBackend("Create User")) return;
   const name    = document.getElementById("nu-name").value.trim();
   const email   = document.getElementById("nu-email").value.trim();
-  const pass    = document.getElementById("nu-pass").value || "password123";
+  const pass    = document.getElementById("nu-pass").value;
   const role    = document.getElementById("nu-role").value.trim() || "Analyst";
   const isAdmin = document.getElementById("nu-admin").checked;
   if (!name || !email) { toast("Name and email required", "error"); return; }
   if (!email.includes("@")) { toast("Enter a valid email", "error"); return; }
+  if (!pass || pass.length < 8) { toast("Password must be at least 8 characters", "error"); return; }
+  if (!/[A-Z]/.test(pass)) { toast("Password must contain at least one uppercase letter (A-Z)", "error"); return; }
+  if (!/\d/.test(pass)) { toast("Password must contain at least one number (0-9)", "error"); return; }
   try {
     await api("POST", "/admin/users/create", { name, email, password: pass, role, isAdmin, company: "Acme Corp" });
     closeModal("addUserModal");
-    ["nu-name","nu-email","nu-role"].forEach(id => document.getElementById(id).value = "");
-    document.getElementById("nu-pass").value = "password123";
+    ["nu-name","nu-email","nu-role","nu-pass"].forEach(id => document.getElementById(id).value = "");
     document.getElementById("nu-admin").checked = false;
-    toast(`✅ User "${name}" created! Login: ${email} / ${pass}`, "success");
+    toast(`✅ User "${name}" created successfully!`, "success");
     loadAdmin();
   } catch(e) {
     const msg = e.message || "Create failed";

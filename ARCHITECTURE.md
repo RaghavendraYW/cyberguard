@@ -1,52 +1,81 @@
-# CyberGuard v2.0 Architecture
+# CyberGuard v2.5 Architecture
 
 This document covers the high-level architecture, design decisions, and system boundaries of the CyberGuard platform.
 
 ## 1. Top-Level Architecture
 
-CyberGuard operates on a monolithic **FastAPI Server** serving a **Vanilla JavaScript** frontend, with distributed **Endpoint Agents** feeding telemetry data to the backend via a REST API.
+CyberGuard operates as an enterprise-grade secure platform combining a **FastAPI Backend Server**, a **Zero-Trust WireGuard VPN Gateway**, a **Vanilla JavaScript SPA Frontend**, and distributed **Endpoint Telemetry Agents**.
 
 ```
-[ Employee Laptop ] --(Agent Telemetry)--> [ FastAPI Server ] <--(REST JSON)-- [ Dashboard UI ]
-                                                   |
-                                            (SQLite / PostgreSQL)
-                                                   |
-                                             (Scikit-Learn ML Engine)
+                           [ Public Internet ]
+                                    │
+                                    ▼ UDP: 51820 (WireGuard Only)
+                      ┌───────────────────────────┐
+                      │  WireGuard Gateway (wg0)  │
+                      │       10.8.0.1/24         │
+                      └─────────────┬─────────────┘
+                                    │ Encrypted ChaCha20 Tunnels
+         ┌──────────────────────────┴──────────────────────────┐
+         ▼                                                     ▼
+[ Admin / Analyst UI ]                                [ Employee Laptop ]
+IP: 10.8.0.2                                          IP: 10.8.0.3
+Posture: Compliant                                    Agent Telemetry
+         │                                                     │
+         └──────────────────────────┬──────────────────────────┘
+                                    ▼ (HTTP strictly over 10.8.0.1:8000)
+                         ┌───────────────────────┐
+                         │    FastAPI Server     │
+                         └──────────┬────────────┘
+                                    │
+                 ┌──────────────────┴──────────────────┐
+                 ▼                                     ▼
+      [ PostgreSQL / SQLite ]              [ Scikit-Learn ML Engine ]
+      • Connection Pooling (10+20)         • Isolation Forest (Anomaly)
+      • Recycle (300s) + Pre-ping          • Random Forest (Vendor Risk)
+      • Zero-Downtime Migration            • Heuristic Classifier
 ```
 
 ## 2. Component Design Choices
 
 ### 2.1 Backend (FastAPI)
-- Chosen for native async IO, auto-generating OpenAPI (`/docs`), and raw throughput.
-- Strictly decoupled into domains (`routes/`, `ml/`, `schemas.py`, `database.py`).
-- Security handles are baked into FastAPI `Depends()` pipelines ensuring guards are universally applied.
+- Native async I/O, auto-generating OpenAPI (`/docs`), and high throughput.
+- Modular domain routes (`routes/`, `ml/`, `schemas.py`, `database.py`).
+- Security handles baked into FastAPI `Depends()` pipelines for universal policy enforcement.
 
 ### 2.2 Agent Tracker (`agent/monitor.py`)
-- Standard standard Python script leveraging `pygetwindow`.
-- Configured using `--server` flags for flexible remote connections.
+- Cross-platform agent leveraging `pygetwindow`.
+- Configured with `--server` flags for flexible remote connections over VPN.
 - Submits asynchronous `POST /ingest` logs over an interval-based loop to prevent server saturation.
-- Authenticates uniquely via a server-generated `tracking_key` tied directly to an identity in the database.
+- Authenticates uniquely via a server-generated `tracking_key` tied to an identity in the database.
 
-### 2.3 Persistence (SQLAlchemy)
-- Platform uses abstract ORM `SQLAlchemy`.
-- Defaults to `SQLite` for simplicity during testing and development.
-- Uses standard URI parameter connection mapping. Can transparently migrate to PostgreSQL by supplying `DATABASE_URL` during Render.com deployment.
+### 2.3 Persistence (SQLAlchemy & PostgreSQL Dual-Engine)
+- **Dual Engine**: Seamless operation on SQLite for local development and PostgreSQL (Neon, Supabase, AWS RDS, Render) in production.
+- **Connection Pool Hardening**: `pool_size=10`, `max_overflow=20`, `pool_recycle=300`, and `pool_pre_ping=True` prevent stale connection drops on serverless/cloud Postgres hosts.
+- **Scheme Normalization**: Transparently maps legacy `postgres://` URLs to `postgresql+psycopg2://`.
+- **Zero-Downtime Migration Tool**: `backend/migrate_to_postgres.py` transfers all 13 relational tables from SQLite to PostgreSQL with integrity checks.
 
 ### 2.4 ML Subsystem
-- ML models are built with `scikit-learn` and stored using `joblib` for secure and fast disk-writing.
+- ML models built with `scikit-learn` and persisted using `joblib`.
 - **Isolation Forest**: Analyzes hour-of-entry, access-control logic, and volume of endpoint telemetry logs.
 - **Random Forest**: Takes risk criteria heuristics for vendor metrics tracking.
 - **Naive Bayes**: Classifies potential phishing payloads and malware identifiers.
 
+### 2.5 Zero-Trust Perimeter & WireGuard VPN Architecture
+- **Network Perimeter Isolation**: Binds internal FastAPI listening sockets to the private WireGuard gateway interface (`10.8.0.1:8000`), blocking unauthorized public WAN access.
+- **Client Configuration Provisioning**: Dynamic `.conf` generator (`/api/vpn/config/{id}`) formats ChaCha20-Poly1305 credentials, virtual IP assignments (`10.8.0.x`), and gateway endpoints.
+- **Continuous Posture Checks**: Real-time evaluation of device security compliance (`compliant`, `warning`, `failed`) and immediate killswitch toggling.
+
 ## 3. Security Decisions
 
-At v2.0, CyberGuard explicitly tackled production risks:
-- Removed volatile Python `pickle.load()` invocations on physical binary payloads. Replaced natively with `joblib`.
-- Defaulted insecure tokens and default configurations to behind `DEBUG` toggles.
-- Addressed malicious telemetry ingestion through `html.escape` and rate-limiting safeguards.
-- Enforced role checking via JWT payload validation (`get_admin` module).
+CyberGuard v2.5 implements multi-layer defense-in-depth:
+- **Zero Public Port Exposure**: Only WireGuard UDP 51820 is publicly accessible; application ports are firewalled via UFW.
+- **Safe Serialization**: `joblib` replaces volatile Python `pickle.load()` on disk payloads.
+- **Production Guardrails**: Insecure demo bypass tokens and debug endpoints disabled when `DEBUG=false`.
+- **Rate-Limiting**: `slowapi` protects against brute-force attacks on authentication (5 req/min) and ingestion (60 req/min).
+- **Session Security**: Short-lived JWT access tokens paired with rotating, revocable database-backed refresh tokens.
 
 ## 4. Frontend Ecosystem
-- Vanilla HTML/JS/CSS to bypass massive compilation overheads while maintaining deep control.
-- Designed strictly adhering to modern CSS parameters (grid templating, color tokens, fluid animations, responsive layouts).
-- Relies on `Chart.js` for data visualization.
+- Vanilla HTML/JS/CSS eliminating compilation overhead while maintaining total control.
+- Modern CSS variables, glassmorphic design system, responsive drawer, and dark/light modes.
+- Interactive visualizations powered by `Chart.js`.
+

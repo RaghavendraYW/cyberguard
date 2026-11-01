@@ -46,9 +46,9 @@ class InsiderThreatDetector:
             admin_count = sum(1 for l in logs if l.action in ['access_settings', 'delete_vendor', 'delete_alert'])
             self.baselines[email] = {
                 'total_logs': len(logs),
-                'avg_hour': np.mean(hours) if hours else 12,
-                'std_hour': max(np.std(hours), 0.1) if hours else 2,
-                'avg_day': np.mean(days) if days else 2.5,
+                'avg_hour': float(np.mean(hours)) if hours else 12.0,
+                'std_hour': float(max(np.std(hours), 0.1)) if hours else 2.0,
+                'avg_day': float(np.mean(days)) if days else 2.5,
                 'after_hours_pct': after_hours / len(logs),
                 'weekend_pct': weekend / len(logs),
                 'unique_actions': unique_actions,

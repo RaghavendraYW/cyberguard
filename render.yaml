@@ -18,7 +18,7 @@ services:
       - key: APP_NAME
         value: CyberGuard
       - key: APP_VERSION
-        value: 2.0.0
+        value: 2.5.0
       - key: DEBUG
         value: false
       - key: JWT_EXPIRE_HOURS

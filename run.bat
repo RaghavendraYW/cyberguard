@@ -1,7 +1,7 @@
 @echo off
 echo.
 echo  =============================================
-echo   CyberGuard v2.0  ^|  Production Ready
+echo   CyberGuard v2.5  |  Production Ready
 echo  =============================================
 cd /d "%~dp0backend"
 
@@ -24,11 +24,7 @@ echo  =============================================
 echo   YOUR URL:    http://127.0.0.1:8000
 echo   COWORKERS:   http://%IP%:8000
 echo.
-echo   ADMIN:  admin@company.com  /  password
-echo   STAFF:  priya@company.com  /  password123
-echo           rahul@company.com  /  password123
-echo           sara@company.com   /  password123
-echo           james@company.com  /  password123
+echo   LOGIN:  Use credentials configured in backend/seed.py
 echo.
 echo   Press Ctrl+C to stop
 echo  =============================================
