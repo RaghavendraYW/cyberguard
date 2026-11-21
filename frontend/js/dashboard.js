@@ -201,7 +201,17 @@ async function loadDashAlerts() {
   if (!el) return;
   try {
     const d = await api("GET", "/alerts/");
-    const alerts = (d.alerts || []).filter(a => a.status !== "resolved").slice(0, 5);
+    const sevWeight = { critical: 0, high: 1, medium: 2, low: 3 };
+    const alerts = (d.alerts || [])
+      .filter(a => a.status !== "resolved")
+      .sort((a, b) => {
+        const sw = (sevWeight[a.severity] ?? 4) - (sevWeight[b.severity] ?? 4);
+        if (sw !== 0) return sw;
+        const tb = new Date(b.createdAt).getTime() || (b.id || 0);
+        const ta = new Date(a.createdAt).getTime() || (a.id || 0);
+        return tb - ta;
+      })
+      .slice(0, 5);
     el.innerHTML = alerts.length ? alerts.map(a => alertHTML(a, true)).join("") :
       '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No open alerts</div></div>';
   } catch (e) {

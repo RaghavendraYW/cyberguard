@@ -25,7 +25,15 @@ def list_alerts(
         q = q.filter_by(severity=severity)
     if status:
         q = q.filter_by(status=status)
-    alerts = sorted(q.all(), key=lambda a: (0 if a.status == "open" else 1, {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(a.severity, 4)))
+    alerts = sorted(
+        q.all(),
+        key=lambda a: (
+            0 if a.status == "open" else 1,
+            {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(a.severity, 4),
+            -(a.created_at.timestamp() if a.created_at else 0),
+            -(a.id or 0),
+        ),
+    )
     total = len(alerts)
     page = alerts[skip:skip + limit]
     return {"alerts": [adict(a) for a in page], "total": total, "skip": skip, "limit": limit,

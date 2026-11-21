@@ -3,6 +3,7 @@
 **/.env
 *.db
 *.sqlite
+*-wireguard*.conf
 
 # Python
 __pycache__/

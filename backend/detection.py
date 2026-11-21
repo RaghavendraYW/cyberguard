@@ -143,20 +143,26 @@ def _fire_event(
 
 
 def _fire_alert(db: Session, rule_key: str, user_email: str, details: str = "") -> None:
-    """Auto-create an AlertDB row for a detection rule if one isn't already open."""
+    """Auto-create or refresh an AlertDB row for a detection rule."""
     rule = RULES[rule_key]
     title = rule["title"]
+    alert_title = f"{title} — {user_email}"
 
     existing = (
         db.query(AlertDB)
-        .filter(AlertDB.title.like(f"%{title}%"), AlertDB.status == "open")
+        .filter(AlertDB.title == alert_title, AlertDB.status == "open")
         .first()
     )
+    now = _now()
     if existing:
+        existing.created_at = now
+        existing.updated_at = now
+        existing.description = details or rule["description"]
+        existing.severity = rule["severity"]
         return
 
     db.add(AlertDB(
-        title=f"{title} — {user_email}",
+        title=alert_title,
         severity=rule["severity"],
         category=rule["tactic"],
         status="open",
@@ -166,6 +172,8 @@ def _fire_alert(db: Session, rule_key: str, user_email: str, details: str = "") 
         ml_score=0.95,
         mitre_tactic=rule["tactic"],
         mitre_technique=rule["technique"],
+        created_at=now,
+        updated_at=now,
     ))
 
 

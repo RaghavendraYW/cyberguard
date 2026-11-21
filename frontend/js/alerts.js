@@ -7,7 +7,18 @@ async function loadAlerts() {
     const d = await api("GET", `/alerts/?${params}`);
     const el = document.getElementById("alertsList");
     if (!el) return;
-    el.innerHTML = d.alerts?.length ? d.alerts.map(a => alertHTML(a)).join("") :
+    const sevWeight = { critical: 0, high: 1, medium: 2, low: 3 };
+    const sortedAlerts = (d.alerts || []).slice().sort((a, b) => {
+      const soA = a.status === "open" ? 0 : 1;
+      const soB = b.status === "open" ? 0 : 1;
+      if (soA !== soB) return soA - soB;
+      const sw = (sevWeight[a.severity] ?? 4) - (sevWeight[b.severity] ?? 4);
+      if (sw !== 0) return sw;
+      const tb = new Date(b.createdAt).getTime() || (b.id || 0);
+      const ta = new Date(a.createdAt).getTime() || (a.id || 0);
+      return tb - ta;
+    });
+    el.innerHTML = sortedAlerts.length ? sortedAlerts.map(a => alertHTML(a)).join("") :
       (typeof renderEmptyState === 'function' ? renderEmptyState('alerts', 'All clear — No alerts found', 'No active security incidents match your selected filters.') : '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-text">No alerts</div></div>');
   } catch (e) {
     const el = document.getElementById("alertsList");
